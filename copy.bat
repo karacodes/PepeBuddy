@@ -1,2 +1,0 @@
-copy /Y D:\Coding\PepeBuddy\PepeBuddy\PepeBuddy.lua "C:\Games\Blizzard\World of Warcraft\interface\addons\PepeBuddy\PepeBuddy.lua"
-copy /Y D:\Coding\PepeBuddy\PepeBuddy\PepeBuddy.toc "C:\Games\Blizzard\World of Warcraft\interface\addons\PepeBuddy\PepeBuddy.toc"
