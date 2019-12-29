@@ -1,7 +1,7 @@
-## Interface: 80200
+## Interface: 80205
 ## Title: PepeBuddy
 ## SavedVariablesPerCharacter: CurrentPepe, CurrentSize, IsMovable
-## Notes: Usage: type /pepe <default, knight, ninja, pirate, viking, scarecrow, traveler, illidari, sucba, tiki> to change the pepe's costume or right click on pepe.
+## Notes: Usage: type /pepe <default, knight, ninja, pirate, viking, scarecrow, traveler, illidari, sucba, tiki, p3p3> to change the pepe's costume or right click on pepe.
 ## Author: Lockspanner
 ## Version: 2.6
 

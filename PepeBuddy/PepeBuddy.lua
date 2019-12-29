@@ -26,22 +26,8 @@ local pepes = {
 	["sucba"] = 1859375,
 	["tiki"] = 1861550,
 	["p3p3"] = 3011956
-
 }
 
--- -- All of the current different flavors of Pepe!
--- local pepes = {
--- 	["default"] = "world/expansion05/doodads/orc/doodads/6hu_garrison_orangebird.m2",
--- 	["knight"] = "world/expansion05/doodads/orc/doodads/6hu_garrison_orangebird_var1.m2",
--- 	["pirate"] = "world/expansion05/doodads/orc/doodads/6hu_garrison_orangebird_var2.m2",
--- 	["ninja"] = "world/expansion05/doodads/orc/doodads/6hu_garrison_orangebird_var3.m2",
--- 	["viking"] = "world/expansion05/doodads/orc/doodads/6hu_garrison_orangebird_var4.m2",
--- 	["scarecrow"] = "world/expansion05/doodads/orc/doodads/6hu_garrison_orangebird_var_halloween.m2",
--- 	["traveler"] = "world/expansion06/doodads/dalaran/7dl_dalaran_orangebird.m2",
--- 	["illidari"] = "world/expansion05/doodads/human/doodads/6hu_garrison_orangebird_var5.m2",
--- 	["sucba"] = "world/expansion07/doodads/human/8hu_kultiras_orangebird01.m2",
--- 	["tiki"] = "world/expansion07/doodads/zandalaritroll/8tr_zandalari_orangebird01.m2"
--- }
 -- total max pepes
 local maxPepes = 11
 -- model used for the feather poof effect
