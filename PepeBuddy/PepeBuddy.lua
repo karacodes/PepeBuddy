@@ -10,7 +10,8 @@ local keys = {
 	"illidari",
 	"sucba",
 	"tiki",
-	"p3p3"
+	"p3p3",
+	"xmas"
 }
 
 -- All of the current different flavors of Pepe!
@@ -25,11 +26,12 @@ local pepes = {
 	["illidari"] = 1534076,
 	["sucba"] = 1859375,
 	["tiki"] = 1861550,
-	["p3p3"] = 3011956
+	["p3p3"] = 3011956,
+	["xmas"] = 3209343
 }
 
 -- total max pepes
-local maxPepes = 11
+local maxPepes = 12
 -- model used for the feather poof effect
 local feathers = 1045240 --"spells/garrison_orangebird_impact.m2"
 -- total time lapsed for the feather poof animation
