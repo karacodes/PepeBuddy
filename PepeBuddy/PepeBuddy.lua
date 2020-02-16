@@ -1,341 +1,702 @@
--- the keys into the pepe table
-local keys = {
+local AceGUI = LibStub('AceGUI-3.0')
+local minimapIcon = LibStub("LibDBIcon-1.0");
+local ADDON_NAME, ADDON_TABLE = ...
+local version = GetAddOnMetadata(ADDON_NAME, "Version")
+local addoninfo = 'Version: ' .. version
+
+---------------------------------------------------------
+-- Addon declaration
+
+PepeBuddy = LibStub('AceAddon-3.0'):NewAddon('PepeBuddy', 'AceConsole-3.0', 'AceEvent-3.0', 'AceTimer-3.0')
+
+---------------------------------------------------------
+-- Vars
+
+PepeBuddy.keys = {
 	"default",
-	"knight",
-	"pirate",
-	"ninja",
 	"viking",
+	"pirate",
+	"knight",
+	"ninja",
 	"scarecrow",
 	"traveler",
-	"illidari",
-	"sucba",
-	"tiki",
-	"p3p3",
-	"xmas"
+	"demonhunter",
+	"diver",
+	"pepejin",
+	"clockwork",
+	"greatfather"
 }
 
--- All of the current different flavors of Pepe!
-local pepes = {
-	["default"] = 1041861,
-	["knight"] = 1131783,
-	["pirate"] = 1131795,
-	["ninja"] = 1131797,
-	["viking"] = 1131798,
-	["scarecrow"] = 1246563,
-	["traveler"] = 1386540,
-	["illidari"] = 1534076,
-	["sucba"] = 1859375,
-	["tiki"] = 1861550,
-	["p3p3"] = 3011956,
-	["xmas"] = 3209343
+PepeBuddy.pepesDropdown = {
+	["default"] = 'Pepe',
+	["viking"] = 'Viking Pepe',
+	["pirate"] = 'Pirate Pepe',
+	["knight"] = 'Knight Pepe',
+	["ninja"] = 'Ninja Pepe',
+	["scarecrow"] = "Hallow's End Pepe",
+	["traveler"] = 'Traveler Pepe',
+	["demonhunter"] = 'Demon Hunter Pepe',
+	["diver"] = 'Diver Pepe',
+	["pepejin"] = "Pepe'jin",
+	["clockwork"] = 'Clockwork Pepe',
+	["greatfather"] = 'Greatfather Pepe'
 }
 
--- total max pepes
-local maxPepes = 12
--- model used for the feather poof effect
-local feathers = 1045240 --"spells/garrison_orangebird_impact.m2"
--- total time lapsed for the feather poof animation
-local timeLapsed = 0
--- default size
-local defaultSize = 300
--- debug boolean
-local debugging = false
+PepeBuddy.pepes = {
+	['default'] = {
+		name = 'Pepe',
+		modelId = 1041861,
+		icon = 1044996,
+		obtainBy = {
+			toy = true,
+			hiddenQuest = false,
+		},
+		toyInfo = {
+			name = 'Trans-Dimensional Bird Whistle',
+			achievementId = 9838,
+			itemId = 122293,
+			spellId = 181943,
+		},
+		hiddenQuestInfo = {
+		},
+	},
+	['viking'] = {
+		name = 'Viking Pepe',
+		modelId = 1131798,
+		icon = 669453,
+		obtainBy = {
+			toy = false,
+			hiddenQuest = true,
+		},
+		toyInfo = {
+		},
+		hiddenQuestInfo = {
+			name = 'A Tiny Viking Helmet',
+			questId = 39265,
+			itemId = 127865,
+			spellId = 188226,
+		},
+	},
+	['pirate'] = {
+		name = 'Pirate Pepe',
+		modelId = 1131795,
+		icon = 133168,
+		obtainBy = {
+			toy = false,
+			hiddenQuest = true,
+		},
+		toyInfo = {
+		},
+		hiddenQuestInfo = {
+			name = 'A Tiny Pirate Hat',
+			questId = 39268,
+			itemId = 127870,
+			spellId = 188241,
+		},
+	},
+	['knight'] = {
+		name = 'Knight Pepe',
+		modelId = 1131783,
+		icon = 133833,
+		obtainBy = {
+			toy = false,
+			hiddenQuest = true,
+		},
+		toyInfo = {
+		},
+		hiddenQuestInfo = {
 
-local backdrop = {
-	-- path to the background texture
-	bgFile = "Interface\\DialogFrame\\UI-DialogBox-Gold-Background",
-	-- path to the border texture
-	edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Gold-Border",
-	-- true to repeat the background texture to fill the frame, false to scale it
-	tile = true,
-	-- size (width or height) of the square repeating background tiles (in pixels)
-	tileSize = 32,
-	-- thickness of edge segments and square size of edge corners (in pixels)
-	edgeSize = 32,
-	-- distance from the edges of the frame to those of the background texture (in pixels)
-	insets = {
-		left = 11,
-		right = 12,
-		top = 12,
-		bottom = 11
+			name = 'A Tiny Plated Helm',
+			questId = 39266,
+			itemId = 127869,
+			spellId = 188239,
+		},
+	},
+	['ninja'] = {
+		name = 'Ninja Pepe',
+		modelId = 1131797,
+		icon = 133183,
+		obtainBy = {
+			toy = false,
+			hiddenQuest = true,
+		},
+		toyInfo = {
+		},
+		hiddenQuestInfo = {
+			name = 'A Tiny Ninja Shroud',
+			questId = 39267,
+			itemId = 127867,
+			spellId = 188230,
+		},
+	},
+	['scarecrow'] = {
+		name = 'Scarecrow Pepe',
+		modelId = 1246563,
+		icon = 658632,
+		obtainBy = {
+			toy = false,
+			hiddenQuest = true,
+		},
+		toyInfo = {
+		},
+		hiddenQuestInfo = {
+			name = 'A Tiny Scarecrow Costume',
+			questId = 39865,
+			itemId = 128874,
+			spellId = 192472,
+			achievementId = 10365,
+		},
+	},
+	['traveler'] = {
+		name = 'Traveler Pepe',
+		modelId = 1386540,
+		icon = 133023,
+		obtainBy = {
+			toy = false,
+			hiddenQuest = true,
+		},
+		toyInfo = {
+		},
+		hiddenQuestInfo = {
+			name = 'A Tiny Pair of Goggles',
+			questId = 43695,
+			itemId = 139632,
+			spellId = 221346,
+			achievementId = 10770,
+		},
+	},
+	['demonhunter'] = {
+		name = 'Demon Hunter Pepe',
+		modelId = 1534076,
+		icon = 1612573,
+		obtainBy = {
+			toy = true,
+			hiddenQuest = false,
+		},
+		toyInfo = {
+			name = 'A Tiny Set of Warglaives',
+			achievementId = 11772,
+			itemId = 147537,
+			spellId = 242014,
+		},
+		hiddenQuestInfo = {
+		},
+	},
+	['diver'] = {
+		name = 'Diver Pepe',
+		modelId = 1859375,
+		icon = 133151,
+		obtainBy = {
+			toy = false,
+			hiddenQuest = true,
+		},
+		toyInfo = {
+		},
+		hiddenQuestInfo = {
+			name = 'A Tiny Diving Helmet',
+			questId = 52277,
+			itemId = 161451,
+			spellId = 275446,
+		},
+	},
+	['pepejin'] = {
+		name = "Pepe'jin",
+		modelId = 1861550,
+		icon = 135462,
+		obtainBy = {
+			toy = false,
+			hiddenQuest = true,
+		},
+		toyInfo = {
+		},
+		hiddenQuestInfo = {
+			name = 'A Tiny Voodoo Mask',
+			questId = 52269,
+			itemId = 161443,
+			spellId = 275369,
+		},
+	},
+	['clockwork'] = {
+		name = "Clockwork Pepe",
+		modelId = 3011956,
+		icon = 348541,
+		obtainBy = {
+			toy = false,
+			hiddenQuest = true,
+		},
+		toyInfo = {
+		},
+		hiddenQuestInfo = {
+			name = 'A Tiny Clockwork Key',
+			questId = 56911,
+			itemId = 170151,
+			spellId = 303990,
+		},
+	},
+	['greatfather'] = {
+		name = "Greatfather Pepe",
+		modelId = 3209343,
+		icon = 1339669,
+		obtainBy = {
+			toy = false,
+			hiddenQuest = true,
+		},
+		toyInfo = {
+		},
+		hiddenQuestInfo = {
+			name = 'A Tiny Winter Hat',
+			questId = 58901,
+			itemId = 174865,
+			spellId = 316934,
+		},
+	},
+}
+
+local defaultOptions = {
+	profile = {
+		disabledInfo = true,
+		isMovable = true,
+		size = 1,
+		model = 'default',
+		minimapIcon = {
+			hide = false,
+		},
 	}
 }
---- Frames ---
-local mainFrame = CreateFrame("Frame", "PepeMainFrame", UIParent)
-mainFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
-mainFrame:SetSize(100, 100)
-if debugging then
-	mainFrame:SetBackdrop(backdrop)
-	mainFrame:SetPoint("Center")
-end
-mainFrame:SetMovable(true)
-mainFrame:SetUserPlaced(true)
-mainFrame:EnableMouse(true)
-mainFrame:RegisterForDrag("LeftButton")
 
-local function SetMoveable()
-	if IsMovable then
-		print("Pepe is unlocked.")
-		mainFrame:SetScript("OnDragStart", mainFrame.StartMoving)
-		mainFrame:SetScript("OnDragStop", mainFrame.StopMovingOrSizing)
+local options = {
+	type = 'group',
+	name = 'Pepe Buddy',
+	icon = 1044996,
+	inline = false,
+	args = {
+		authorPull = {
+			type = "description",
+			width = "full",
+			order = 1,
+			name = "Author: Lockspanner - Wyrmrest Accord",
+		},
+		versionPull = {
+			type = "description",
+			width = "full",
+			order = 2,
+			name = addoninfo,
+		},
+		spacer3 = {
+			type = "description",
+			width = "full",
+			order = 3,
+			name = "\n\n",
+		},
+		minimapIcon = {
+			name = 'Hide mini-map icon',
+			type = 'toggle',
+			width = 'double',
+			order = 4,
+			set = function(info, val)
+				PepeBuddy.db.profile.minimapIcon.hide = val
+				if PepeBuddy.db.profile.minimapIcon.hide then
+					minimapIcon:Hide("PepeBuddyLDBI")
+				else
+					minimapIcon:Show("PepeBuddyLDBI")
+				end
+			end,
+			get = function(info) return PepeBuddy.db.profile.minimapIcon.hide end
+		},
+		isMovable = {
+			name = 'Unlock Pepe',
+			desc = 'Makes pepe movable.',
+			type = 'toggle',
+			width = 'double',
+			order = 5,
+			set = function(info, val)
+				PepeBuddy.db.profile.isMovable = val
+			end,
+			get = function(info) return PepeBuddy.db.profile.isMovable end
+		},
+		model = {
+			name = 'Which Pepe',
+			desc = 'Choose which Pepe you wish to have on your UI.',
+			type = 'select',
+			values =  PepeBuddy.pepesDropdown,
+			sorting = PepeBuddy.keys,
+			set = function(info, val)
+				PepeBuddy.db.profile.model = val
+				PepeBuddy:SetPepe(PepeBuddy.db.profile.model)
+			end,
+			get = function(info)
+				return PepeBuddy.db.profile.model
+			end,
+			style = 'dropdown',
+			width = 'full',
+			order = 6,
+		},
+		size = {
+			name = 'Size',
+			desc = 'How large Pepe should be in pixels.',
+			type = 'range',
+			min = 0.5,
+			max = 8,
+			step = 0.05,
+			isPercent = true,
+			width = 'double',
+			order = 7,
+			set = function(info, val)
+				PepeBuddy.db.profile.size = val
+				PepeBuddy:UpdatePepeSize()
+			end,
+			get = function(info) return PepeBuddy.db.profile.size end
+		},
+		reset = {
+			name = 'Reset',
+			type = 'execute',
+			width = 'normal',
+			order = 8,
+			func = function()
+				PepeBuddy:Reset()
+			end,
+		},
+		spacer3 = {
+			type = "description",
+			width = "full",
+			order = 9,
+			name = "\n\n",
+		},
+	},
+}
+
+
+--moreoptions={
+--	name = function(info)
+--		local itemName, itemLink, itemRarity, itemLevel, itemMinLevel, itemType, itemSubType, itemStackCount,
+--		itemEquipLoc, itemIcon, itemSellPrice, itemClassID, itemSubClassID, bindType, expacID, itemSetID,
+--		isCraftingReagent = GetItemInfo(122293)
+--		return string.format("Costumes known for %s.", itemLink)
+--	end,
+--	type = "group",
+--	inline = true,
+--	args={
+--		costume01 = {
+--			name = function(info)
+--				local isKnown = "|cffFF0000unknown|r"
+--				if (IsQuestFlaggedCompleted(39265)) then
+--					isKnown = "|cff00FF00known|r"
+--				end
+--				local name, rank, icon, castTime, minRange, maxRange, spellId = GetSpellInfo(188226)
+--				local link = GetSpellLink(188226);
+--				return string.format("%s is %s.", link, isKnown)
+--			end,
+--			image = function(info)
+--				local name, rank, icon, castTime, minRange, maxRange, spellId = GetSpellInfo(188226)
+--				return icon, 24, 24
+--			end,
+--			type = 'description',
+--			width = 'double',
+--			order = 1,
+--		},
+--		costume02 = {
+--			name = function(info)
+--				local isKnown = "|cffFF0000unknown|r"
+--				if (IsQuestFlaggedCompleted(39267)) then
+--					isKnown = "|cff00FF00known|r"
+--				end
+--				local name, rank, icon, castTime, minRange, maxRange, spellId = GetSpellInfo(188230)
+--				return string.format("%s is %s.", name, isKnown)
+--			end,
+--			image = function(info)
+--				local name, rank, icon, castTime, minRange, maxRange, spellId = GetSpellInfo(188230)
+--				return icon, 24, 24
+--			end,
+--			type = 'description',
+--			width = 'double',
+--			order = 2,
+--		},
+--		costume03 = {
+--			name = function(info)
+--				local isKnown = "|cffFF0000unknown|r"
+--				if (IsQuestFlaggedCompleted(39266)) then
+--					isKnown = "|cff00FF00known|r"
+--				end
+--				local name, rank, icon, castTime, minRange, maxRange, spellId = GetSpellInfo(188239)
+--				return string.format("%s is %s.", name, isKnown)
+--			end,
+--			image = function(info)
+--				local name, rank, icon, castTime, minRange, maxRange, spellId = GetSpellInfo(188239)
+--				return icon, 24, 24
+--			end,
+--			type = 'description',
+--			width = 'double',
+--			order = 3,
+--		},
+--		costume04 = {
+--			name = function(info)
+--				local isKnown = "|cffFF0000unknown|r"
+--				if (IsQuestFlaggedCompleted(39268)) then
+--					isKnown = "|cff00FF00known|r"
+--				end
+--				local name, rank, icon, castTime, minRange, maxRange, spellId = GetSpellInfo(188241)
+--				return string.format("%s is %s.", name, isKnown)
+--			end,
+--			image = function(info)
+--				local name, rank, icon, castTime, minRange, maxRange, spellId = GetSpellInfo(188241)
+--				return icon, 24, 24
+--			end,
+--			type = 'description',
+--			width = 'double',
+--			order = 4,
+--		},
+--		costume05 = {
+--			name = function(info)
+--				local isKnown = "|cffFF0000unknown|r"
+--				if (PlayerHasToy(147537)) then
+--					isKnown = "|cff00FF00known|r"
+--				end
+--				--local name, rank, icon, castTime, minRange, maxRange, spellId = GetSpellInfo(242014)
+--				local itemID, toyName, icon, isFavorite, hasFanfare, itemQuality = C_ToyBox.GetToyInfo(147537)
+--				return string.format("%s is %s.", toyName, isKnown)
+--			end,
+--			image = function(info)
+--				--local name, rank, icon, castTime, minRange, maxRange, spellId = GetSpellInfo(242014)
+--				local itemID, toyName, icon, isFavorite, hasFanfare, itemQuality = C_ToyBox.GetToyInfo(147537)
+--				return icon, 24, 24
+--			end,
+--			type = 'description',
+--			width = 'double',
+--			order = 5,
+--		},
+--		costume06 = {
+--			name = function(info)
+--				local isKnown = "|cffFF0000unknown|r"
+--				if (IsQuestFlaggedCompleted(43695)) then
+--					isKnown = "|cff00FF00known|r"
+--				end
+--				local name, rank, icon, castTime, minRange, maxRange, spellId = GetSpellInfo(221346)
+--				return string.format("%s is %s.", name, isKnown)
+--			end,
+--			image = function(info)
+--				local name, rank, icon, castTime, minRange, maxRange, spellId = GetSpellInfo(221346)
+--				return icon, 24, 24
+--			end,
+--			type = 'description',
+--			width = 'double',
+--			order = 6,
+--		},
+--		costume07 = {
+--			name = function(info)
+--				local isKnown = "|cffFF0000unknown|r"
+--				if (IsQuestFlaggedCompleted(52277)) then
+--					isKnown = "|cff00FF00known|r"
+--				end
+--				local name, rank, icon, castTime, minRange, maxRange, spellId = GetSpellInfo(275446)
+--				return string.format("%s is %s.", name, isKnown)
+--			end,
+--			image = function(info)
+--				local name, rank, icon, castTime, minRange, maxRange, spellId = GetSpellInfo(275446)
+--				return icon, 24, 24
+--			end,
+--			type = 'description',
+--			width = 'double',
+--			order = 7,
+--		},
+--		costume08 = {
+--			name = function(info)
+--				local isKnown = "|cffFF0000unknown|r"
+--				if (IsQuestFlaggedCompleted(52269)) then
+--					isKnown = "|cff00FF00known|r"
+--				end
+--				local name, rank, icon, castTime, minRange, maxRange, spellId = GetSpellInfo(275369)
+--				return string.format("%s is %s.", name, isKnown)
+--			end,
+--			image = function(info)
+--				local name, rank, icon, castTime, minRange, maxRange, spellId = GetSpellInfo(275369)
+--				return icon, 24, 24
+--			end,
+--			type = 'description',
+--			width = 'double',
+--			order = 8,
+--		},
+--		costume09 = {
+--			name = function(info)
+--				local isKnown = "|cffFF0000unknown|r"
+--				if (IsQuestFlaggedCompleted(56911)) then
+--					isKnown = "|cff00FF00known|r"
+--				end
+--				local name, rank, icon, castTime, minRange, maxRange, spellId = GetSpellInfo(303990)
+--				return string.format("%s is %s.", name, isKnown)
+--			end,
+--			image = function(info)
+--				local name, rank, icon, castTime, minRange, maxRange, spellId = GetSpellInfo(303990)
+--				return icon, 24, 24
+--			end,
+--			type = 'description',
+--			width = 'double',
+--			order = 9,
+--		},
+--	},
+--},
+
+PepeBuddy.minimapIconDB = LibStub("LibDataBroker-1.1"):NewDataObject("PepeBuddyLDB", {
+	type = "data source",
+	text = "None",
+	label = "Pepe Buddy",
+	icon = PepeBuddy.pepes['default'].icon,
+	tocname = "PepeBuddy",
+	OnClick = function(self, button)
+		if (button == "LeftButton") then
+			PepeBuddy:ShowConfig()
+		end
+	end,
+	OnTooltipShow = function(tooltip)
+		tooltip:AddDoubleLine("|cffFFFFFFPepe Buddy|r", "|cff33FF99"..addoninfo.."|r");
+		tooltip:AddLine(" ");
+		tooltip:AddLine("Click Pepe will:")
+		tooltip:AddLine("|cffC79C6EShift Left-Click:|r |cff33FF99Toggle Pepe Lock.|r")
+		tooltip:AddLine("|cffC79C6EShift Right-Click:|r |cff33FF99Use the Pepe Toy.|r")
+		tooltip:AddLine("|cffC79C6EMiddle-Click:|r |cff33FF99Open the configuration panel.|r")
+		tooltip:AddLine(" ")
+		tooltip:AddLine("|cffC79C6EClick Minimap Button:|r |cff33FF99Open the configuration panel.|r")
+	end,
+})
+
+---------------------------------------------------------
+-- functions
+
+PepeBuddy.DefaultPrint = PepeBuddy.Print
+function PepeBuddy:Print(...)
+	if PepeBuddy.db.profile.disabledInfo then
+		return
+	end
+	PepeBuddy:DefaultPrint(...)
+end
+
+function PepeBuddy:OnInitialize()
+	LibStub('AceConfig-3.0'):RegisterOptionsTable('PepeBuddy', options, {'pepebudy', 'pepe'})
+	PepeBuddy.db = LibStub('AceDB-3.0'):New('PepeBuddyPreferences', defaultOptions)
+	PepeBuddy.optionsFrame = LibStub('AceConfigDialog-3.0'):AddToBlizOptions('PepeBuddy', 'Pepe Buddy')
+	minimapIcon:Register("PepeBuddyLDBI", PepeBuddy.minimapIconDB, PepeBuddy.db.profile.minimapIcon)
+	if PepeBuddy.db.profile.minimapIcon.hide then
+		minimapIcon:Hide("PepeBuddyLDBI")
 	else
-		print("Pepe is locked.")
-		mainFrame:SetScript("OnDragStart", nil)
-		mainFrame:SetScript("OnDragStop", nil)
+		minimapIcon:Show("PepeBuddyLDBI")
 	end
+	PepeBuddy:Setup()
 end
 
-local costumePepeModelFrame = CreateFrame("PlayerModel", "CostumePepe", mainFrame)
-costumePepeModelFrame:SetPoint("CENTER", mainFrame, "CENTER")
+function PepeBuddy:OnEnable()
+	PepeBuddy:RegisterEvent('PLAYER_ENTERING_WORLD')
+	PepeBuddy:Print('PepeBuddy Initialized')
+	PepeBuddy:ShowPepe()
+end
 
-local defaultPepeModelFrame = CreateFrame("PlayerModel", "DefaultPepe", mainFrame)
-defaultPepeModelFrame:SetPoint("CENTER", mainFrame, "CENTER")
+function PepeBuddy:OnDisable()
+	-- Called when the addon is disabled
+end
 
-local feathersModelFrame = CreateFrame("PlayerModel", "Feathers", mainFrame)
-feathersModelFrame:SetPoint("CENTER", mainFrame, "CENTER")
-feathersModelFrame:RegisterAllEvents()
+function PepeBuddy:Chirp()
+	PlaySound(48236)
+end
 
-local function OnEventHandler(self, event, arg1, ...)
+function PepeBuddy:UpdatePepeSize()
+	local size = PepeBuddy.db.profile.size * 500
+	PepeBuddy.mainFrame:SetSize(size/4, size/4)
+	PepeBuddy.pepeModelFrame:SetSize(size, size)
+end
+
+function PepeBuddy:ShowPepe()
+	PepeBuddy.mainFrame:Show()
+	PepeBuddy.pepeModelFrame:Show()
+end
+
+function PepeBuddy:SetPepe(pepeKey)
+	PepeBuddy.pepeModelFrame:SetModel(PepeBuddy.pepes[pepeKey].modelId)
+
+	if pepeKey == "default" then
+		PepeBuddy.pepeModelFrame:SetCamera(1)
+		PepeBuddy.pepeModelFrame:SetPosition(-1,0,0)
+	else
+		PepeBuddy.pepeModelFrame:SetCamera(0)
+		PepeBuddy.pepeModelFrame:SetPosition(0,0,0)
+	end
+	-- setup the default pepe
+	PepeBuddy:Chirp()
+end
+
+function PepeBuddy:HidePepe()
+	PepeBuddy.mainFrame:Hide()
+	PepeBuddy.pepeModelFrame:Hide()
+end
+
+function PepeBuddy:Reset()
+	PepeBuddy.db.profile.isMovable = true
+	PepeBuddy.db.profile.size = 1
+	PepeBuddy.db.profile.model = "default"
+	PepeBuddy.mainFrame:SetPoint("CENTER")
+	PepeBuddy.pepeModelFrame:SetPoint("CENTER", PepeBuddy.mainFrame, "CENTER")
+	PepeBuddy:SetPepe(PepeBuddy.db.profile.model)
+	PepeBuddy:UpdatePepeSize()
+	PepeBuddy:ShowPepe()
+end
+
+function PepeBuddy:Setup()
+	--- Frames ---
+	PepeBuddy.mainFrame = CreateFrame("Frame", "PepeBuddyMainFrame", UIParent)
+	PepeBuddy.mainFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
+	PepeBuddy.mainFrame:SetMovable(true)
+	PepeBuddy.mainFrame:SetUserPlaced(true)
+	PepeBuddy.mainFrame:SetClampedToScreen(true)
+	PepeBuddy.mainFrame:RegisterForDrag("LeftButton")
+	PepeBuddy.mainFrame:SetScript("OnMouseUp", OnMouseUpHandler)
+	PepeBuddy.mainFrame:SetScript("OnEvent", OnEventHandler)
+	PepeBuddy.mainFrame:SetScript("OnShow", OnShowHandler)
+	PepeBuddy.mainFrame:SetScript("OnDragStart", function(self)
+		if PepeBuddy.db.profile.isMovable then
+			PepeBuddy.mainFrame:StartMoving()
+		end
+	end)
+	PepeBuddy.mainFrame:SetScript("OnDragStop", PepeBuddy.mainFrame.StopMovingOrSizing)
+	PepeBuddy.mainFrame:EnableMouse(true)
+
+	PepeBuddy.pepeModelFrame = CreateFrame("PlayerModel", "PepeModelFrame", PepeBuddy.mainFrame)
+
+	PepeBuddy.pepeModelFrame:SetPoint("CENTER", PepeBuddy.mainFrame, "CENTER")
+	PepeBuddy.pepeModelFrame:SetCamera(1)
+	PepeBuddy:SetPepe(PepeBuddy.db.profile.model)
+	PepeBuddy:UpdatePepeSize()
+	PepeBuddy:ShowPepe()
+end
+
+function PepeBuddy:ShowConfig()
+	InterfaceOptionsFrame_OpenToCategory(PepeBuddy.optionsFrame)
+	InterfaceOptionsFrame_OpenToCategory(PepeBuddy.optionsFrame)
+end
+
+function PepeBuddy:PLAYER_ENTERING_WORLD()
+	PepeBuddy:ShowPepe()
+end
+
+function OnEventHandler(self, event, arg1, ...)
 	if (event == "PLAYER_ENTERING_WORLD") then
-		if CurrentPepe == nil then
-			CurrentPepe = "default"
-			RestPepe()
-		end
-		if CurrentSize == nil then
-			CurrentSize = defaultSize
-		end
-		if IsMovable == nil then
-			IsMovable = true
-		end
-
-		DebugPrint("CurrentPepe: ", CurrentPepe)
-		DebugPrint("CurrentSize: ", CurrentSize)
-
-		Setup()
+		PepeBuddy:ShowPepe()
 	end
 end
 
-local function OnMouseUpHandler(self, button)
+function OnMouseUpHandler(self, button)
+	if button == "MiddleButton"  then
+		PepeBuddy:ShowConfig()
+	end
 	if IsShiftKeyDown() then
 		if button == "LeftButton" then
-			IsMovable = not IsMovable
-			SetMoveable()
+			PepeBuddy.db.profile.isMovable = not PepeBuddy.db.profile.isMovable
 		end
-	end
-	if IsMovable and button == "RightButton"  then
-		RotatePepes()
-	end
-end
-
-local function OnShowHandler(self)
-	DebugPrint("Main Frame Shown.")
-	SetPepe(CurrentPepe)
-end
-
-mainFrame:SetScript("OnMouseUp", OnMouseUpHandler)
-mainFrame:SetScript("OnEvent", OnEventHandler)
-mainFrame:SetScript("OnShow", OnShowHandler)
-
---- Event Hanlder for the OnUpdate event for the Feather Poof Model.
--- @param self Feather Poof Model
--- @param elapsed Time elapsed since last call
---
-local function FeathersOnUpdate(self, elapsed)
-	-- if the model is currently visible
-	if (self:IsVisible()) then
-		-- add the total time lapsed up.
-		timeLapsed = timeLapsed + elapsed
-		-- when time lapsed gets to 1.5 seconds then
-		if (timeLapsed > 2) then
-			-- hide the feather poof model.
-			self:Hide()
-			-- reset the time lapsed to 0 for the next time it appears.
-			timeLapsed = 0
-		end
-	end
-end
-
-feathersModelFrame:SetScript("OnUpdate", FeathersOnUpdate)
-
----
--- Gets the next key from the key list
-function GetNextKey()
-	for i,key in ipairs(keys) do
-		if (key == CurrentPepe) then
-			if ((i+1) > maxPepes) then
-				return keys[1]
-			else
-				return keys[i+1]
+		if button == "RightButton" then
+			if PlayerHasToy(122293) then
+				UseToy(122293)
 			end
 		end
 	end
 end
 
-function Setup()
-	-- Set the size of the frame to the last used size.
-	SetSize()
-	-- setup the costumed pepe.
-	costumePepeModelFrame:SetCamera(0)
-	costumePepeModelFrame:SetPosition(0,0,0)
-	-- setup the default pepe
-	defaultPepeModelFrame:SetCamera(1)
-	defaultPepeModelFrame:SetPosition(-1,0,0)
-	-- set the size for the feathers
-	feathersModelFrame:SetCamera(0)
-	feathersModelFrame:SetPosition(-0.2,0,0)
-	SetPepe(CurrentPepe)
-	SetMoveable()
-end
-
-function SetSize()
-	costumePepeModelFrame:SetSize(CurrentSize, CurrentSize)
-	defaultPepeModelFrame:SetSize(CurrentSize, CurrentSize)
-	feathersModelFrame:SetSize(CurrentSize, CurrentSize)
-	mainFrame:SetSize(CurrentSize/4, CurrentSize/4)
-end
-
-
---- Sets the current Pepe
--- @param pepeIndex which pepe to set
---
-function SetPepe(pepeIndex)
-	-- remember the pepeIndex
-	CurrentPepe = pepeIndex
-	-- gets the pepe model from the pepe table
-	local pepe = pepes[pepeIndex]
-	if pepeIndex == "default" then
-		-- gets the pepe model from the pepe table
-		local defaultPepe = pepes["default"]
-		-- sets the default Pepe Viewer to the default pepe.
-		defaultPepeModelFrame:SetModel(defaultPepe)
-	else
-		-- gets the pepe model from the pepe table
-		local pepe = pepes[pepeIndex]
-		-- sets the PepeModel Viewer to the current pepe.
-		costumePepeModelFrame:SetModel(pepe)
-	end
-	-- Shows the model.
-	defaultPepeModelFrame:Show()
-	costumePepeModelFrame:Show()
-
-	if pepeIndex == "default" then
-		defaultPepeModelFrame:SetAlpha(1.0)
-		costumePepeModelFrame:SetAlpha(0.0)
-	else
-		defaultPepeModelFrame:SetAlpha(0.0)
-		costumePepeModelFrame:SetAlpha(1.0)
-	end
-end
-
---- Shows the Feather Poof Animation
---
-function FeatherPoof()
-	feathersModelFrame:SetModelByFileID(feathers)
-	feathersModelFrame:Show()
-end
-
---- Reshows the pepe model
--- Also causes a feather poof and a chirp.
-function ShowPepe()
-	SetPepe(CurrentPepe)
-	FeatherPoof()
-	Chirp()
-end
-
-function RotatePepes()
-	CurrentPepe = GetNextKey()
-	DebugPrint("Pepe Rotated to ",CurrentPepe)
-	ShowPepe()
-end
-
-function Chirp()
-	PlaySound(48236)
-end
-
-function RestPepe()
-	CurrentPepe = "default"
-	IsMovable = true
-	mainFrame:SetPoint("CENTER")
-	mainFrame:Show()
-	SetMoveable()
-	ShowPepe()
-end
-
-
-function DebugPrint(...)
-	if (debugging) then
-		print(...)
-	end
-end
-
--------------------
---- Slash Commands
--------------------
-SLASH_PEPE1 = "/pepe"
-SLASH_PEPESET1 = "/pepeset"
-SLASH_PEPERESET1 = "/pepereset"
-SLASH_PEPESHOW1 = "/pepeshow"
-SLASH_PEPEHIDE1 = "/pepehide"
-SLASH_PEPELOCK1 = "/pepelock"
-
---- Sets the size of pepe
--- @param input the size of the width to set
--- @param EditBox Not used
---
-SlashCmdList["PEPESET"] = function(input, EditBox)
-	local PS = tonumber(input)
-	if PS == nil then
-		print("Invalid Input: use /pepeset ###")
-	else
-		CurrentSize = PS
-		SetSize()
-	end
-end
-
---- Sets the Pepe model
--- @param input the model to set by key name
--- @param EditBox not used
---
-SlashCmdList["PEPE"] = function(input, EditBox)
-	local pepeIndex = string.lower(input)
-	local pepe = pepes[pepeIndex]
-	if pepeIndex == nil or pepe == nil then
-		print("PepeBuddy:\n",
-			"  use '/pepe <default, knight, ninja, pirate, viking, scarecrow, traveler, illidari, sucba, tiki>' to change the pepe's costume or right click on pepe.\n",
-			"  use '/pepeset ###' to set pepe's size.",
-			"  use '/pepereset' to reset to the defaults or if pepe flies away!\n",
-			"  use '/pepeshow' to show pepe if he has been hidden.\n",
-			"  use '/pepehide' to hide pepe.\n",
-			"  use '/pepelock' to lock pepe and prevent him from moving or changing costumes.\n"
-		)
-	else
-		CurrentPepe = pepeIndex
-		ShowPepe()
-	end
-end
-
---- Resets the pepe to the default pepe
-SlashCmdList["PEPERESET"] = function()
-	RestPepe()
-end
-
---- Show Pepe if he was hidden
-SlashCmdList["PEPESHOW"] = function()
-	if (mainFrame:IsVisible() == false) then
-		mainFrame:Show()
-		FeatherPoof()
-		Chirp()
-	end
-end
-
---- Hides Pepe
-SlashCmdList["PEPEHIDE"] = function()
-	mainFrame:Hide()
-	Chirp()
-end
-
---- Locks and Unlocks Pepe's Moving Frame
-SlashCmdList["PEPELOCK"] = function()
-	IsMovable = not IsMovable
-	SetMoveable()
+function OnShowHandler(self)
+	PepeBuddy:Print("Main Frame Shown.")
+	PepeBuddy:SetPepe(PepeBuddy.db.profile.model)
 end
