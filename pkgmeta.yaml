@@ -1,0 +1,7 @@
+package-as: PepeBuddy
+enable-nolib-creation: no
+
+ignore:
+  - PepeBuddyAddon.code-workspace
+
+license-output: LICENSE.txt
