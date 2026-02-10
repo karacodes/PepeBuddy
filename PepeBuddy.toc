@@ -1,8 +1,8 @@
-## Interface: 80300
+## Interface: 120000
 ## Title: Pepe Buddy
 ## SavedVariablesPerCharacter: PepeBuddyPreferences
 ## Author: Lockspanner
-## Version: 3.0
+## Version: 4.0
 
 Libs\LibDBIcon-1.0\embeds.xml
 Libs\LibStub\LibStub.lua
