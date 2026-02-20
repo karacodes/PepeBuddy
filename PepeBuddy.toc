@@ -1,20 +1,14 @@
-## Interface: 120000
+## Interface: 120001, 120000
 ## Title: Pepe Buddy
 ## SavedVariablesPerCharacter: PepeBuddyPreferences
 ## Author: Lockspanner
 ## Version: 4.0
+## IconTexture: Interface\AddOns\PepeBuddy\Art\Icons\ability_garrison_orangebird.jpg
 
-Libs\LibDBIcon-1.0\embeds.xml
-Libs\LibStub\LibStub.lua
-Libs\CallbackHandler-1.0\CallbackHandler-1.0.xml
-Libs\LibSharedMedia-3.0\lib.xml
-Libs\AceAddon-3.0\AceAddon-3.0.xml
-Libs\AceTimer-3.0\AceTimer-3.0.xml
-Libs\AceEvent-3.0\AceEvent-3.0.xml
-Libs\AceConsole-3.0\AceConsole-3.0.xml
-Libs\AceDB-3.0\AceDB-3.0.xml
-Libs\AceGUI-3.0\AceGUI-3.0.xml
-Libs\AceGUI-3.0-SharedMediaWidgets\widget.xml
-Libs\AceConfig-3.0\AceConfig-3.0.xml
+embeds.xml
 
 PepeBuddy.lua
+Data\Pepes.lua
+Config\Database.lua
+Frames\Perch.lua
+Config\Options.lua
