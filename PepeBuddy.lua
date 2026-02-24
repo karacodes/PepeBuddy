@@ -61,16 +61,8 @@ end
 function PepeBuddy:OnEnable()
     if self.perchFrame then
         self.perchFrame:Show()
-        if self.SetPerchPepe then
-            local selected = self:GetSelectedPepeSetting()
-            self:SetPerchPepe(selected)
-            if C_Timer and C_Timer.After then
-                C_Timer.After(0.2, function()
-                    if PepeBuddy and PepeBuddy.SetPerchPepe then
-                        PepeBuddy:SetPerchPepe(selected)
-                    end
-                end)
-            end
+        if self.ApplyPerchState then
+            self:ApplyPerchState("OnEnable")
         end
     end
 end

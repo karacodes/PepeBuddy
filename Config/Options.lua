@@ -51,7 +51,8 @@ pb.options = {
                         return PepeBuddy:GetSelectedPepeSetting()
                     end,
                     set = function(_, value)
-                        PepeBuddy:SetPerchPepe(value)
+                        PepeBuddy:SetSelectedPepeSetting(value)
+                        PepeBuddy:ApplyPerchState("Options.selectedPepe")
                     end,
                 },
                 scale = {

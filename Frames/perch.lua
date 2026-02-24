@@ -120,7 +120,8 @@ local function ApplyPepeByIndex(index)
     local pepe = pepes[perchIndex]
     local applied = false
     if perchModel and type(perchModel.ApplySpellVisualKit) == "function" then
-        applied = pcall(perchModel.ApplySpellVisualKit, perchModel, pepe.id, false)
+        local ok, result = pcall(perchModel.ApplySpellVisualKit, perchModel, pepe.id, false)
+        applied = ok and result ~= false
     end
     DebugTrace(
         "modelApply",
@@ -188,7 +189,7 @@ local function CreatePerchFrame()
     perchFrame:SetMovable(true)
     perchFrame:EnableMouse(false)
     perchFrame:SetScript("OnShow", function()
-        PepeBuddy:SetPerchPepe(GetSavedPepeIndex())
+        PepeBuddy:ApplyPerchState("OnShow")
         PepeBuddy:StartPerchRefresh()
     end)
     perchFrame:SetScript("OnHide", function()
@@ -228,9 +229,21 @@ local function CreatePerchFrame()
     ApplyPerchDebugStyle()
 end
 
+function PepeBuddy:ApplyPerchState(reason)
+    if not perchFrame then
+        CreatePerchFrame()
+    end
+
+    self:UpdatePerchSize()
+    self:ApplyPerchDebugStyle()
+    self:SetPerchPepe(self:GetSelectedPepeSetting())
+
+    DebugTrace("modelApply", "ApplyPerchState reason=%s", tostring(reason or "unknown"))
+end
+
 function PepeBuddy:InitializePerch()
     CreatePerchFrame()
-    self:SetPerchPepe(GetSavedPepeIndex())
+    self:ApplyPerchState("InitializePerch")
     perchFrame:Hide()
     self.perchFrame = perchFrame
 end
@@ -272,7 +285,8 @@ end
 
 function PepeBuddy:SetPerchScale(scale)
     self:SetPerchScaleSetting(scale)
-    PepeBuddy:UpdatePerchSize()
+    self:UpdatePerchSize()
+    self:ApplyPerchDebugStyle()
 end
 
 local function GetBottomCenterInUIParent(frame)
@@ -410,10 +424,6 @@ function PepeBuddy:OnPerchRefreshEvent(event, unit)
         return
     end
 
-    self:SetPerchPepe(GetSavedPepeIndex())
+    self:ApplyPerchState("OnPerchRefreshEvent")
     self._perchRefreshPasses = (self._perchRefreshPasses or 0) + 1
-
-    if self._perchRefreshPasses >= 3 then
-        self:StopPerchRefresh()
-    end
 end
