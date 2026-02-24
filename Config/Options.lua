@@ -14,6 +14,7 @@ pb.options = {
     type = "group",
     icon = 1044996,
     inline = false,
+    childGroups = "tab",
     args = {
         authorPull = {
             type = "description",
@@ -33,20 +34,75 @@ pb.options = {
             order = 3,
             name = "\n\n",
         },
-        selectedPepe = {
-            type = "select",
-            width = "full",
+        settings = {
+            name = "Settings",
+            type = "group",
+            inline = false,
             order = 4,
-            name = "Perch Pepe",
-            desc = "Choose which Pepe is shown on the perch.",
-            values = BuildPepeValues,
-            get = function()
-                return (PepeBuddy.db and PepeBuddy.db.profile and PepeBuddy.db.profile.selectedPepe) or 1
-            end,
-            set = function(_, value)
-                PepeBuddy:SetPerchPepe(value)
-            end,
+            args={
+                selectedPepe = {
+                    type = "select",
+                    width = "full",
+                    order = 1,
+                    name = "Pepe Perch",
+                    desc = "Choose which Pepe is shown on the perch.",
+                    values = BuildPepeValues,
+                    get = function()
+                        return (PepeBuddy.db and PepeBuddy.db.profile and PepeBuddy.db.profile.selectedPepe) or 1
+                    end,
+                    set = function(_, value)
+                        PepeBuddy:SetPerchPepe(value)
+                    end,
+                },
+                scale = {
+                    type = "range",
+                    width = "full",
+                    order = 2,
+                    name = "Scale",
+                    desc = "Set the display size of Pepe.",
+                    min = 0.05,
+                    max = 4,
+                    softMin = 0.15,
+                    softMax = 3.5,
+                    step = 0.05,
+                    isPercent = true,
+                    get = function()
+                        return PepeBuddy:GetPerchScale()
+                    end,
+                    set = function(_, value)
+                        PepeBuddy:SetPerchScale(value)
+                    end,
+                },
+                resetPerch = {
+                    type = "execute",
+                    width = "full",
+                    order = 3,
+                    name = "Reset Pepe Position and Scale",
+                    desc = "Reset Pepe to defaults and move the perch back to screen center.",
+                    func = function()
+                        PepeBuddy:ResetPerchToDefaults()
+                        local aceConfigRegistry = LibStub("AceConfigRegistry-3.0", true)
+                        if aceConfigRegistry then
+                            aceConfigRegistry:NotifyChange(pb.addonName)
+                        end
+                    end,
+                },
+            }
         },
+        unlocks = {
+            name = "Secrets",
+            type = "group",
+            order = 5,
+            args={
+                --comingSoon = {
+                --    type = "label",
+                --    width = "full",
+                --    order = 1,
+                --    name = "Coming Soon",
+                --    desc = "List of Pepe Costumes and how to get them, coming soon.",
+                --},
+            }
+        }
     },
 }
 

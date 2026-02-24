@@ -18,10 +18,47 @@ PepeBuddy = LibStub("AceAddon-3.0"):NewAddon(
 
 PepeBuddy.minimapIcon = LibStub("LibDBIcon-1.0")
 
+function PepeBuddy:SetDebugMode(enabled)
+    local mode = enabled and true or false
+    pb.debugMode = mode
+
+    if self.db and self.db.profile then
+        self.db.profile.debugMode = mode
+    end
+
+    if self.ApplyPerchDebugStyle then
+        self:ApplyPerchDebugStyle()
+    end
+end
+
+function PepeBuddy:HandleSlashCommand(input)
+    local msg = strtrim((input or ""):lower())
+
+    if msg == "" then
+        self:OpenSettings()
+        return
+    end
+
+    if msg == "debug" then
+        self:SetDebugMode(not pb.debugMode)
+    elseif msg == "debug on" then
+        self:SetDebugMode(true)
+    elseif msg == "debug off" then
+        self:SetDebugMode(false)
+    else
+        self:Print("Usage: /pb debug | /pb debug on | /pb debug off")
+        return
+    end
+
+    self:Print("Debug mode is now " .. (pb.debugMode and "ON" or "OFF"))
+end
+
 function PepeBuddy:OnInitialize()
     self:SetupDatabase()
     self:SetupOptions()
     self:SetupMinimapIcon()
+    self:RegisterChatCommand("pb", "HandleSlashCommand")
+    self:RegisterChatCommand("pepebuddy", "HandleSlashCommand")
     self:InitializePerch()
 end
 
