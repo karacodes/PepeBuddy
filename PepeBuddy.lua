@@ -8,6 +8,7 @@ pb.preferenceName = ADDON_NAME .. "Preferences"
 pb.version = version
 pb.minimapIconName = ADDON_NAME .. "MIN"
 pb.minimapDBName = ADDON_NAME .. "LDB"
+pb.slashUsage = "Usage: /pb | /pb debug | /pb debug on | /pb debug off"
 
 PepeBuddy = LibStub("AceAddon-3.0"):NewAddon(
     pb.addonName,
@@ -29,20 +30,28 @@ end
 
 function PepeBuddy:HandleSlashCommand(input)
     local msg = strtrim((input or ""):lower())
+    local cmd, arg1 = msg:match("^(%S+)%s*(.*)$")
+    cmd = cmd or ""
+    arg1 = arg1 or ""
 
-    if msg == "" then
+    if cmd == "" then
         self:OpenSettings()
         return
     end
 
-    if msg == "debug" then
+    if cmd == "help" then
+        self:Print(pb.slashUsage)
+        return
+    end
+
+    if cmd == "debug" and arg1 == "" then
         self:SetDebugMode(not self:GetDebugMode())
-    elseif msg == "debug on" then
+    elseif cmd == "debug" and arg1 == "on" then
         self:SetDebugMode(true)
-    elseif msg == "debug off" then
+    elseif cmd == "debug" and arg1 == "off" then
         self:SetDebugMode(false)
     else
-        self:Print("Usage: /pb debug | /pb debug on | /pb debug off")
+        self:Print(pb.slashUsage)
         return
     end
 

@@ -508,7 +508,6 @@ function PepeBuddy:StartPerchRefresh()
     end
 
     self._perchRefreshActive = true
-    self._perchRefreshPasses = 0
     self:RegisterEvent("PLAYER_ENTERING_WORLD", "OnPerchRefreshEvent")
     self:RegisterEvent("UNIT_MODEL_CHANGED", "OnPerchRefreshEvent")
 end
@@ -519,7 +518,6 @@ function PepeBuddy:StopPerchRefresh()
     end
 
     self._perchRefreshActive = false
-    self._perchRefreshPasses = 0
     CancelPendingPepeRetry()
     self:UnregisterEvent("PLAYER_ENTERING_WORLD")
     self:UnregisterEvent("UNIT_MODEL_CHANGED")
@@ -535,5 +533,4 @@ function PepeBuddy:OnPerchRefreshEvent(event, unit)
     end
 
     self:ApplyPerchState("OnPerchRefreshEvent")
-    self._perchRefreshPasses = (self._perchRefreshPasses or 0) + 1
 end
