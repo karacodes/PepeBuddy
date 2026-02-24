@@ -5,6 +5,27 @@ local perchHandleFrame
 local perchModel
 local perchIndex = 1
 local PrintPerchBottomCenters
+
+local PERCH_LAYOUT = {
+    defaultSize = 200,
+    handleSizeRatio = 0.25,
+    handleYOffsetScale = 40,
+    handleYOffsetBase = -5,
+    initialPoint = { "CENTER", "CENTER" },
+}
+
+local PERCH_STYLE = {
+    backdrop = {
+        bgFile = "Interface\\Buttons\\WHITE8x8",
+        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+        edgeSize = 12,
+        insets = { left = 2, right = 2, top = 2, bottom = 2 },
+    },
+    debugBorder = { 0.2, 0.85, 1, 1 },
+    debugBackground = { 0, 0, 0, 0.15 },
+    transparent = { 0, 0, 0, 0 },
+}
+
 local debugTraceFlags = {
     modelApply = true,
     anchorMath = true,
@@ -24,6 +45,26 @@ local function DebugTrace(flag, message, ...)
     PepeBuddy:Print(string.format("[Debug:%s] " .. message, flag, ...))
 end
 
+local function GetDefaultPerchSize()
+    return tonumber(PepeBuddy:GetSettingDefault("size")) or PERCH_LAYOUT.defaultSize
+end
+
+local function ComputePerchSize(scale)
+    return GetDefaultPerchSize() * scale
+end
+
+local function ComputeHandleLayout(scale, perchSize)
+    local handleSize = perchSize * PERCH_LAYOUT.handleSizeRatio
+    local yOffset = (PERCH_LAYOUT.handleYOffsetScale * scale) + PERCH_LAYOUT.handleYOffsetBase
+    return handleSize, yOffset
+end
+
+local function ApplyTransparentBackdrop(frame)
+    frame:SetBackdrop(PERCH_STYLE.backdrop)
+    frame:SetBackdropColor(unpack(PERCH_STYLE.transparent))
+    frame:SetBackdropBorderColor(unpack(PERCH_STYLE.transparent))
+end
+
 local perchConfig = {
     cam = 0.70,
     zoom = 0.00,
@@ -36,6 +77,7 @@ local perchConfig = {
     paused = true,
 }
 
+-- Model helpers
 local function ApplyModelVisual()
     if not perchModel then
         return
@@ -73,7 +115,7 @@ local function GetSavedPepeIndex()
     return perchIndex
 end
 
-local function CreateFreshModel()
+local function EnsureModelReady()
     if not perchFrame then
         return
     end
@@ -99,7 +141,16 @@ local function CreateFreshModel()
     end
 
     ApplyModelVisual()
-    DebugTrace("modelApply", "CreateFreshModel complete")
+    DebugTrace("modelApply", "EnsureModelReady complete")
+end
+
+local function ApplyPepeVisual(pepe)
+    local applied = false
+    if perchModel and pepe and type(perchModel.ApplySpellVisualKit) == "function" then
+        local ok, result = pcall(perchModel.ApplySpellVisualKit, perchModel, pepe.id, false)
+        applied = ok and result ~= false
+    end
+    return applied
 end
 
 local function ApplyPepeByIndex(index)
@@ -115,14 +166,10 @@ local function ApplyPepeByIndex(index)
     end
     perchIndex = index
 
-    CreateFreshModel()
+    EnsureModelReady()
 
     local pepe = pepes[perchIndex]
-    local applied = false
-    if perchModel and type(perchModel.ApplySpellVisualKit) == "function" then
-        local ok, result = pcall(perchModel.ApplySpellVisualKit, perchModel, pepe.id, false)
-        applied = ok and result ~= false
-    end
+    local applied = ApplyPepeVisual(pepe)
     DebugTrace(
         "modelApply",
         "ApplyPepeByIndex index=%d id=%d applied=%s",
@@ -133,6 +180,7 @@ local function ApplyPepeByIndex(index)
     return applied
 end
 
+-- Style helpers
 -- helper you can call whenever debugMode changes
 local function ApplyPerchDebugStyle()
     if not perchFrame then
@@ -141,19 +189,19 @@ local function ApplyPerchDebugStyle()
 
     local debugMode = PepeBuddy and PepeBuddy.GetDebugMode and PepeBuddy:GetDebugMode()
     if debugMode then
-        perchFrame:SetBackdropColor(0, 0, 0, 0.15)
-        perchFrame:SetBackdropBorderColor(0.2, 0.85, 1, 1)
+        perchFrame:SetBackdropColor(unpack(PERCH_STYLE.debugBackground))
+        perchFrame:SetBackdropBorderColor(unpack(PERCH_STYLE.debugBorder))
     else
-        perchFrame:SetBackdropColor(0, 0, 0, 0)
-        perchFrame:SetBackdropBorderColor(0, 0, 0, 0)
+        perchFrame:SetBackdropColor(unpack(PERCH_STYLE.transparent))
+        perchFrame:SetBackdropBorderColor(unpack(PERCH_STYLE.transparent))
     end
 
     if perchHandleFrame then
-        perchHandleFrame:SetBackdropColor(0, 0, 0, 0)
+        perchHandleFrame:SetBackdropColor(unpack(PERCH_STYLE.transparent))
         if debugMode then
-            perchHandleFrame:SetBackdropBorderColor(0.2, 0.85, 1, 1)
+            perchHandleFrame:SetBackdropBorderColor(unpack(PERCH_STYLE.debugBorder))
         else
-            perchHandleFrame:SetBackdropBorderColor(0, 0, 0, 0)
+            perchHandleFrame:SetBackdropBorderColor(unpack(PERCH_STYLE.transparent))
         end
     end
 end
@@ -162,30 +210,27 @@ function PepeBuddy:ApplyPerchDebugStyle()
     ApplyPerchDebugStyle()
 end
 
+-- Layout helpers
 local function UpdatePerchHandleLayout(size)
     if not perchHandleFrame or not perchFrame then
         return
     end
 
-    local handleSize = size * 0.25
     local scale = PepeBuddy:GetPerchScale()
-    local yOffset = (40 * scale) - 5
+    local handleSize, yOffset = ComputeHandleLayout(scale, size)
 
-    --perchHandleFrame:ClearAllPoints()
     perchHandleFrame:SetPoint("BOTTOM", perchFrame, "BOTTOM", 0, yOffset)
     perchHandleFrame:SetSize(handleSize, handleSize)
 end
 
-local function CreatePerchFrame()
+local function EnsurePerchFrameCreated(size)
     if perchFrame then
         return
     end
 
     perchFrame = CreateFrame("Frame", "PepeBuddyPerchFrame", UIParent, "BackdropTemplate")
-    local defaultSize = tonumber(PepeBuddy:GetSettingDefault("size")) or 200
-    local size = defaultSize * PepeBuddy:GetPerchScale()
     perchFrame:SetSize(size, size)
-    perchFrame:SetPoint("CENTER", UIParent, "CENTER", -size, 0)
+    perchFrame:SetPoint(PERCH_LAYOUT.initialPoint[1], UIParent, PERCH_LAYOUT.initialPoint[2], -size, 0)
     perchFrame:SetMovable(true)
     perchFrame:EnableMouse(false)
     perchFrame:SetScript("OnShow", function()
@@ -195,15 +240,14 @@ local function CreatePerchFrame()
     perchFrame:SetScript("OnHide", function()
         PepeBuddy:StopPerchRefresh()
     end)
-    perchFrame:SetBackdrop({
-        bgFile = "Interface\\Buttons\\WHITE8x8",
-        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-        edgeSize = 12,
-        insets = { left = 2, right = 2, top = 2, bottom = 2 },
-    })
-    perchFrame:SetBackdropColor(0, 0, 0, 0)
-    perchFrame:SetBackdropBorderColor(0, 0, 0, 0)
+    ApplyTransparentBackdrop(perchFrame)
     perchFrame:SetClipsChildren(true)
+end
+
+local function EnsurePerchHandleCreated(size)
+    if perchHandleFrame then
+        return
+    end
 
     perchHandleFrame = CreateFrame("Frame", nil, perchFrame, "BackdropTemplate")
     UpdatePerchHandleLayout(size)
@@ -216,19 +260,23 @@ local function CreatePerchFrame()
         perchFrame:StopMovingOrSizing()
         PrintPerchBottomCenters("DragStop")
     end)
-    perchHandleFrame:SetBackdrop({
-        bgFile = "Interface\\Buttons\\WHITE8x8",
-        edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
-        edgeSize = 12,
-        insets = { left = 2, right = 2, top = 2, bottom = 2 },
-    })
-    perchHandleFrame:SetBackdropColor(0, 0, 0, 0)
-    perchHandleFrame:SetBackdropBorderColor(0, 0, 0, 0)
+    ApplyTransparentBackdrop(perchHandleFrame)
+end
+
+local function CreatePerchFrame()
+    if perchFrame then
+        return
+    end
+
+    local size = ComputePerchSize(PepeBuddy:GetPerchScale())
+    EnsurePerchFrameCreated(size)
+    EnsurePerchHandleCreated(size)
 
     ApplyPepeByIndex(perchIndex)
     ApplyPerchDebugStyle()
 end
 
+-- State application and public API
 function PepeBuddy:ApplyPerchState(reason)
     if not perchFrame then
         CreatePerchFrame()
@@ -336,8 +384,8 @@ function PepeBuddy:UpdatePerchSize()
         return
     end
 
-    local defaultSize = tonumber(self:GetSettingDefault("size")) or 200
-    local size = defaultSize * self:GetPerchScale()
+    local scale = self:GetPerchScale()
+    local size = ComputePerchSize(scale)
     local anchorX, anchorY = GetBottomCenterInUIParent(perchHandleFrame)
     if not anchorX then
         anchorX, anchorY = GetBottomCenterInUIParent(perchFrame)
@@ -345,7 +393,7 @@ function PepeBuddy:UpdatePerchSize()
     DebugTrace(
         "anchorMath",
         "UpdatePerchSize begin scale=%.2f size=%.2f anchor=(%s,%s)",
-        self:GetPerchScale(),
+        scale,
         size,
         anchorX and string.format("%.2f", anchorX) or "nil",
         anchorY and string.format("%.2f", anchorY) or "nil"
@@ -358,7 +406,7 @@ function PepeBuddy:UpdatePerchSize()
     perchFrame:SetSize(size, size)
     UpdatePerchHandleLayout(size)
     if anchorX and anchorY then
-        local yOffset = (40 * self:GetPerchScale()) - 5
+        local _, yOffset = ComputeHandleLayout(scale, size)
         perchFrame:ClearAllPoints()
         perchFrame:SetPoint("BOTTOM", UIParent, "BOTTOMLEFT", anchorX, anchorY - yOffset)
     end
@@ -367,7 +415,6 @@ end
 
 function PepeBuddy:ResetPerchToDefaults()
     local defaultScale = tonumber(self:GetSettingDefault("scale")) or 1
-    local defaultSize = tonumber(self:GetSettingDefault("size")) or 200
     local defaultSelected = tonumber(self:GetSettingDefault("selectedPepe")) or 1
 
     self:SetPerchScaleSetting(defaultScale)
@@ -380,7 +427,7 @@ function PepeBuddy:ResetPerchToDefaults()
         return
     end
 
-    local size = defaultSize * defaultScale
+    local size = ComputePerchSize(defaultScale)
     perchFrame:ClearAllPoints()
     perchFrame:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
     perchFrame:SetSize(size, size)
