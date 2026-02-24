@@ -20,11 +20,7 @@ PepeBuddy.minimapIcon = LibStub("LibDBIcon-1.0")
 
 function PepeBuddy:SetDebugMode(enabled)
     local mode = enabled and true or false
-    pb.debugMode = mode
-
-    if self.db and self.db.profile then
-        self.db.profile.debugMode = mode
-    end
+    self:SetSetting("debugMode", mode)
 
     if self.ApplyPerchDebugStyle then
         self:ApplyPerchDebugStyle()
@@ -40,7 +36,7 @@ function PepeBuddy:HandleSlashCommand(input)
     end
 
     if msg == "debug" then
-        self:SetDebugMode(not pb.debugMode)
+        self:SetDebugMode(not self:GetDebugMode())
     elseif msg == "debug on" then
         self:SetDebugMode(true)
     elseif msg == "debug off" then
@@ -50,7 +46,7 @@ function PepeBuddy:HandleSlashCommand(input)
         return
     end
 
-    self:Print("Debug mode is now " .. (pb.debugMode and "ON" or "OFF"))
+    self:Print("Debug mode is now " .. (self:GetDebugMode() and "ON" or "OFF"))
 end
 
 function PepeBuddy:OnInitialize()
@@ -66,7 +62,7 @@ function PepeBuddy:OnEnable()
     if self.perchFrame then
         self.perchFrame:Show()
         if self.SetPerchPepe then
-            local selected = (self.db and self.db.profile and self.db.profile.selectedPepe) or 1
+            local selected = self:GetSelectedPepeSetting()
             self:SetPerchPepe(selected)
             if C_Timer and C_Timer.After then
                 C_Timer.After(0.2, function()

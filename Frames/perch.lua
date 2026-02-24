@@ -11,7 +11,7 @@ local debugTraceFlags = {
 }
 
 local function DebugTrace(flag, message, ...)
-    if not pb.debugMode then
+    if not (PepeBuddy and PepeBuddy.GetDebugMode and PepeBuddy:GetDebugMode()) then
         return
     end
     if not debugTraceFlags[flag] then
@@ -67,7 +67,10 @@ local function ApplyModelVisual()
 end
 
 local function GetSavedPepeIndex()
-    return (PepeBuddy.db and PepeBuddy.db.profile and PepeBuddy.db.profile.selectedPepe) or perchIndex
+    if PepeBuddy and PepeBuddy.GetSelectedPepeSetting then
+        return PepeBuddy:GetSelectedPepeSetting()
+    end
+    return perchIndex
 end
 
 local function CreateFreshModel()
@@ -135,7 +138,8 @@ local function ApplyPerchDebugStyle()
         return
     end
 
-    if pb.debugMode then
+    local debugMode = PepeBuddy and PepeBuddy.GetDebugMode and PepeBuddy:GetDebugMode()
+    if debugMode then
         perchFrame:SetBackdropColor(0, 0, 0, 0.15)
         perchFrame:SetBackdropBorderColor(0.2, 0.85, 1, 1)
     else
@@ -145,7 +149,7 @@ local function ApplyPerchDebugStyle()
 
     if perchHandleFrame then
         perchHandleFrame:SetBackdropColor(0, 0, 0, 0)
-        if pb.debugMode then
+        if debugMode then
             perchHandleFrame:SetBackdropBorderColor(0.2, 0.85, 1, 1)
         else
             perchHandleFrame:SetBackdropBorderColor(0, 0, 0, 0)
@@ -177,7 +181,7 @@ local function CreatePerchFrame()
     end
 
     perchFrame = CreateFrame("Frame", "PepeBuddyPerchFrame", UIParent, "BackdropTemplate")
-    local defaultSize = (pb.defaultOptions and pb.defaultOptions.profile and pb.defaultOptions.profile.size) or 200
+    local defaultSize = tonumber(PepeBuddy:GetSettingDefault("size")) or 200
     local size = defaultSize * PepeBuddy:GetPerchScale()
     perchFrame:SetSize(size, size)
     perchFrame:SetPoint("CENTER", UIParent, "CENTER", -size, 0)
@@ -245,9 +249,7 @@ function PepeBuddy:SetPerchPepe(index, retryCount)
         nextIndex = 1
     end
 
-    if self.db and self.db.profile then
-        self.db.profile.selectedPepe = nextIndex
-    end
+    self:SetSelectedPepeSetting(nextIndex)
 
     if not perchFrame then
         CreatePerchFrame()
@@ -265,15 +267,11 @@ function PepeBuddy:SetPerchPepe(index, retryCount)
 end
 
 function PepeBuddy:GetPerchScale()
-    local defaultScale = (pb.defaultOptions and pb.defaultOptions.profile and pb.defaultOptions.profile.scale) or 1
-    return (self.db and self.db.profile and self.db.profile.scale) or defaultScale
+    return self:GetPerchScaleSetting()
 end
 
 function PepeBuddy:SetPerchScale(scale)
-    if (PepeBuddy.db and PepeBuddy.db.profile) then
-        local defaultScale = (pb.defaultOptions and pb.defaultOptions.profile and pb.defaultOptions.profile.scale) or 1
-        PepeBuddy.db.profile.scale = scale or defaultScale
-    end
+    self:SetPerchScaleSetting(scale)
     PepeBuddy:UpdatePerchSize()
 end
 
@@ -324,7 +322,7 @@ function PepeBuddy:UpdatePerchSize()
         return
     end
 
-    local defaultSize = (pb.defaultOptions and pb.defaultOptions.profile and pb.defaultOptions.profile.size) or 200
+    local defaultSize = tonumber(self:GetSettingDefault("size")) or 200
     local size = defaultSize * self:GetPerchScale()
     local anchorX, anchorY = GetBottomCenterInUIParent(perchHandleFrame)
     if not anchorX then
@@ -354,15 +352,12 @@ function PepeBuddy:UpdatePerchSize()
 end
 
 function PepeBuddy:ResetPerchToDefaults()
-    local defaults = (pb.defaultOptions and pb.defaultOptions.profile) or {}
-    local defaultScale = tonumber(defaults.scale) or 1
-    local defaultSize = tonumber(defaults.size) or 200
-    local defaultSelected = tonumber(defaults.selectedPepe) or 1
+    local defaultScale = tonumber(self:GetSettingDefault("scale")) or 1
+    local defaultSize = tonumber(self:GetSettingDefault("size")) or 200
+    local defaultSelected = tonumber(self:GetSettingDefault("selectedPepe")) or 1
 
-    if self.db and self.db.profile then
-        self.db.profile.scale = defaultScale
-        self.db.profile.selectedPepe = defaultSelected
-    end
+    self:SetPerchScaleSetting(defaultScale)
+    self:SetSelectedPepeSetting(defaultSelected)
 
     if not perchFrame then
         CreatePerchFrame()

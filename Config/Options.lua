@@ -48,7 +48,7 @@ pb.options = {
                     desc = "Choose which Pepe is shown on the perch.",
                     values = BuildPepeValues,
                     get = function()
-                        return (PepeBuddy.db and PepeBuddy.db.profile and PepeBuddy.db.profile.selectedPepe) or 1
+                        return PepeBuddy:GetSelectedPepeSetting()
                     end,
                     set = function(_, value)
                         PepeBuddy:SetPerchPepe(value)
