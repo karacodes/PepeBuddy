@@ -26,10 +26,18 @@ local PERCH_STYLE = {
     transparent = { 0, 0, 0, 0 },
 }
 
+local MODEL_APPLY = {
+    retryDelaySeconds = 0.2,
+    maxRetries = 3,
+}
+
 local debugTraceFlags = {
     modelApply = true,
     anchorMath = true,
 }
+
+local pendingPepeRetryTimer = nil
+local pendingPepeRetryToken = 0
 
 local function DebugTrace(flag, message, ...)
     if not (PepeBuddy and PepeBuddy.GetDebugMode and PepeBuddy:GetDebugMode()) then
@@ -115,6 +123,16 @@ local function GetSavedPepeIndex()
     return perchIndex
 end
 
+local function NormalizePepeIndex(index, pepes)
+    local nextIndex = tonumber(index) or 1
+    if nextIndex < 1 then
+        nextIndex = #pepes
+    elseif nextIndex > #pepes then
+        nextIndex = 1
+    end
+    return nextIndex
+end
+
 local function EnsureModelReady()
     if not perchFrame then
         return
@@ -178,6 +196,61 @@ local function ApplyPepeByIndex(index)
         tostring(applied)
     )
     return applied
+end
+
+local function CancelPendingPepeRetry()
+    if pendingPepeRetryTimer and PepeBuddy and type(PepeBuddy.CancelTimer) == "function" then
+        pcall(PepeBuddy.CancelTimer, PepeBuddy, pendingPepeRetryTimer)
+    end
+    pendingPepeRetryTimer = nil
+end
+
+local function TryApplyPepeWithRetry(index, attempt, token, reason)
+    if token ~= pendingPepeRetryToken then
+        return false
+    end
+
+    local applied = ApplyPepeByIndex(index)
+    if applied then
+        CancelPendingPepeRetry()
+        DebugTrace(
+            "modelApply",
+            "TryApplyPepeWithRetry success index=%d attempt=%d reason=%s",
+            index,
+            attempt,
+            tostring(reason or "unknown")
+        )
+        return true
+    end
+
+    if attempt >= MODEL_APPLY.maxRetries then
+        DebugTrace(
+            "modelApply",
+            "TryApplyPepeWithRetry failed index=%d attempts=%d reason=%s",
+            index,
+            attempt,
+            tostring(reason or "unknown")
+        )
+        return false
+    end
+
+    if PepeBuddy and type(PepeBuddy.ScheduleTimer) == "function" then
+        pendingPepeRetryTimer = PepeBuddy:ScheduleTimer(function()
+            pendingPepeRetryTimer = nil
+            TryApplyPepeWithRetry(index, attempt + 1, token, reason)
+        end, MODEL_APPLY.retryDelaySeconds)
+        DebugTrace(
+            "modelApply",
+            "TryApplyPepeWithRetry scheduled retry index=%d nextAttempt=%d reason=%s",
+            index,
+            attempt + 1,
+            tostring(reason or "unknown")
+        )
+        return false
+    end
+
+    DebugTrace("modelApply", "TryApplyPepeWithRetry has no timer API; giving up")
+    return false
 end
 
 -- Style helpers
@@ -296,19 +369,13 @@ function PepeBuddy:InitializePerch()
     self.perchFrame = perchFrame
 end
 
-function PepeBuddy:SetPerchPepe(index, retryCount)
+function PepeBuddy:SetPerchPepe(index, reason)
     local pepes = pb.pepes or {}
     if #pepes == 0 then
         return
     end
 
-    local retries = tonumber(retryCount) or 0
-    local nextIndex = tonumber(index) or 1
-    if nextIndex < 1 then
-        nextIndex = #pepes
-    elseif nextIndex > #pepes then
-        nextIndex = 1
-    end
+    local nextIndex = NormalizePepeIndex(index, pepes)
 
     self:SetSelectedPepeSetting(nextIndex)
 
@@ -316,15 +383,10 @@ function PepeBuddy:SetPerchPepe(index, retryCount)
         CreatePerchFrame()
     end
 
-    local applied = ApplyPepeByIndex(nextIndex)
-    if not applied and retries < 3 and C_Timer and C_Timer.After then
-        DebugTrace("modelApply", "SetPerchPepe retry scheduled index=%d retry=%d", nextIndex, retries + 1)
-        C_Timer.After(0.2, function()
-            PepeBuddy:SetPerchPepe(nextIndex, retries + 1)
-        end)
-    elseif not applied then
-        DebugTrace("modelApply", "SetPerchPepe failed index=%d retries=%d", nextIndex, retries)
-    end
+    pendingPepeRetryToken = pendingPepeRetryToken + 1
+    local token = pendingPepeRetryToken
+    CancelPendingPepeRetry()
+    TryApplyPepeWithRetry(nextIndex, 0, token, reason or "SetPerchPepe")
 end
 
 function PepeBuddy:GetPerchScale()
@@ -458,6 +520,7 @@ function PepeBuddy:StopPerchRefresh()
 
     self._perchRefreshActive = false
     self._perchRefreshPasses = 0
+    CancelPendingPepeRetry()
     self:UnregisterEvent("PLAYER_ENTERING_WORLD")
     self:UnregisterEvent("UNIT_MODEL_CHANGED")
 end
