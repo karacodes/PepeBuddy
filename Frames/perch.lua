@@ -5,6 +5,24 @@ local perchHandleFrame
 local perchModel
 local perchIndex = 1
 local PrintPerchBottomCenters
+local debugTraceFlags = {
+    modelApply = true,
+    anchorMath = true,
+}
+
+local function DebugTrace(flag, message, ...)
+    if not pb.debugMode then
+        return
+    end
+    if not debugTraceFlags[flag] then
+        return
+    end
+    if not PepeBuddy or type(PepeBuddy.Print) ~= "function" then
+        return
+    end
+
+    PepeBuddy:Print(string.format("[Debug:%s] " .. message, flag, ...))
+end
 
 local perchConfig = {
     cam = 0.70,
@@ -78,6 +96,7 @@ local function CreateFreshModel()
     end
 
     ApplyModelVisual()
+    DebugTrace("modelApply", "CreateFreshModel complete")
 end
 
 local function ApplyPepeByIndex(index)
@@ -100,6 +119,13 @@ local function ApplyPepeByIndex(index)
     if perchModel and type(perchModel.ApplySpellVisualKit) == "function" then
         applied = pcall(perchModel.ApplySpellVisualKit, perchModel, pepe.id, false)
     end
+    DebugTrace(
+        "modelApply",
+        "ApplyPepeByIndex index=%d id=%d applied=%s",
+        perchIndex,
+        pepe.id,
+        tostring(applied)
+    )
     return applied
 end
 
@@ -229,9 +255,12 @@ function PepeBuddy:SetPerchPepe(index, retryCount)
 
     local applied = ApplyPepeByIndex(nextIndex)
     if not applied and retries < 3 and C_Timer and C_Timer.After then
+        DebugTrace("modelApply", "SetPerchPepe retry scheduled index=%d retry=%d", nextIndex, retries + 1)
         C_Timer.After(0.2, function()
             PepeBuddy:SetPerchPepe(nextIndex, retries + 1)
         end)
+    elseif not applied then
+        DebugTrace("modelApply", "SetPerchPepe failed index=%d retries=%d", nextIndex, retries)
     end
 end
 
@@ -276,6 +305,20 @@ local function GetBottomCenterInUIParent(frame)
     return (left + right) / 2, bottom
 end
 
+PrintPerchBottomCenters = function(tag)
+    local perchX, perchY = GetBottomCenterInUIParent(perchFrame)
+    local handleX, handleY = GetBottomCenterInUIParent(perchHandleFrame)
+    DebugTrace(
+        "anchorMath",
+        "%s perch=(%s,%s) handle=(%s,%s)",
+        tag or "event",
+        perchX and string.format("%.2f", perchX) or "nil",
+        perchY and string.format("%.2f", perchY) or "nil",
+        handleX and string.format("%.2f", handleX) or "nil",
+        handleY and string.format("%.2f", handleY) or "nil"
+    )
+end
+
 function PepeBuddy:UpdatePerchSize()
     if not perchFrame then
         return
@@ -287,6 +330,14 @@ function PepeBuddy:UpdatePerchSize()
     if not anchorX then
         anchorX, anchorY = GetBottomCenterInUIParent(perchFrame)
     end
+    DebugTrace(
+        "anchorMath",
+        "UpdatePerchSize begin scale=%.2f size=%.2f anchor=(%s,%s)",
+        self:GetPerchScale(),
+        size,
+        anchorX and string.format("%.2f", anchorX) or "nil",
+        anchorY and string.format("%.2f", anchorY) or "nil"
+    )
 
     if perchFrame:GetNumPoints() == 0 then
         perchFrame:SetPoint("CENTER", UIParent, "CENTER", -size, 0)
@@ -299,6 +350,7 @@ function PepeBuddy:UpdatePerchSize()
         perchFrame:ClearAllPoints()
         perchFrame:SetPoint("BOTTOM", UIParent, "BOTTOMLEFT", anchorX, anchorY - yOffset)
     end
+    PrintPerchBottomCenters("UpdatePerchSize")
 end
 
 function PepeBuddy:ResetPerchToDefaults()
