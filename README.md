@@ -1,40 +1,38 @@
 # PepeBuddy
-Pepe Buddy - World of Warcraft addon that places Pepe on your UI.
+Pepe Buddy is a World of Warcraft addon that places Pepe on your UI.
 
-## Baseline Behavior (Phase 0)
-This baseline is the expected behavior to preserve during refactors.
+## Features
+- Display Pepe on a movable perch.
+- Choose from multiple Pepe variants.
+- Resize Pepe with a scale slider.
+- Persistent settings per character.
 
-1. Addon load:
-   - Pepe renders on a perch frame.
-   - Perch is hidden when addon is disabled and shown when enabled.
-2. Perch movement:
-   - Dragging is performed via the handle frame, not the full perch frame.
-   - Handle remains anchored relative to perch and scales with perch size.
-3. Resizing:
-   - Scale changes resize perch and handle.
-   - Handle bottom-center remains the anchor reference used during resize.
-4. Pepe switching:
-   - Changing selected Pepe applies a SpellVisualKit and updates saved selection.
-5. Debug mode:
-   - Perch and handle outlines are visible only in debug mode.
-   - Background remains transparent.
+## Installation
+1. Download/install the addon into your WoW AddOns folder:
+   - `_retail_/Interface/AddOns/PepeBuddy`
+2. Launch WoW or run `/reload` if already in game.
+3. Enable **Pepe Buddy** on the character select AddOns list.
 
-## Manual Regression Checklist
-Run this checklist after any structural change.
+## How To Use
+1. Open settings with:
+   - `/pb`
+2. In settings:
+   - choose **Pepe Perch** variant
+   - set **Scale**
+   - use **Reset Pepe Position and Scale** if needed
+3. Drag using the perch handle area to move Pepe.
 
-1. `/reload` and verify Pepe is visible.
-2. Switch Pepe variants repeatedly; verify no permanent invisible state.
-3. Drag perch via handle; verify it tracks cursor and stops cleanly.
-4. Change scale from small to large values (for example `0.55`, `1.0`, `2.0`, `3.5`).
-5. Confirm handle remains aligned where expected after each resize.
-6. Toggle debug on/off with `/pb debug` and verify border visibility changes correctly.
-7. Disable and re-enable addon; verify perch hide/show behavior.
-8. `/reload` again and verify selected Pepe, scale, and debug mode persisted.
+## Slash Commands
+- `/pb` opens settings.
+- `/pb help` shows command usage.
+- `/pb debug` toggles debug mode.
+- `/pb debug on` enables debug mode.
+- `/pb debug off` disables debug mode.
 
-## Temporary Debug Tracing (Phase 0)
-When `debugMode` is enabled, `Frames/Perch.lua` emits trace logs to chat for:
+## Notes
+- On some teleports or heavy zone loads, Pepe may take a moment to reappear.
+- This is expected and should recover automatically.
 
-1. `modelApply`: model creation, visual kit apply result, retry scheduling/failure.
-2. `anchorMath`: resize anchor inputs and resulting perch/handle bottom-center coords.
-
-These traces are intended for refactor validation and can be reduced/removed after stabilization.
+## Support
+- If something looks wrong, first try `/reload`.
+- Then test with only PepeBuddy enabled to rule out addon conflicts.
