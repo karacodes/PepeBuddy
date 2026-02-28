@@ -2,7 +2,7 @@
 ## Title: Pepe Buddy
 ## SavedVariablesPerCharacter: PepeBuddyPreferences
 ## Author: Lockspanner
-## Version: 4.0
+## Version: 4.0.1
 ## IconTexture: Interface\AddOns\PepeBuddy\Art\Icons\ability_garrison_orangebird.jpg
 
 embeds.xml
