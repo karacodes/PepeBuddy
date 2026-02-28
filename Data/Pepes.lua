@@ -11,13 +11,16 @@ pb.pepes = {
     { id = 72523, name = "Traveler" },
     { id = 82672, name = "Demon Hunter" },
     { id = 100924, name = "Diver" },
-    { id = 100671, name = "Zandalari" },
-    { id = 115987, name = "Robotic" },
+    { id = 100671, name = "Pepe'jin" },
+    { id = 115987, name = "Clockwork " },
     { id = 122909, name = "Winter Veil" },
     { id = 148121, name = "Kyrian" },
     { id = 148122, name = "Necrolord" },
     { id = 148123, name = "Night Fae" },
     { id = 148125, name = "Venthyr" },
+    { id = 193447, name = "Tuskarr" },
+    { id = 193444, name = "Explorer" },
+    { id = 193430, name = "Dragon " },
 }
 
 pb.feathers = { id = 78648, name = "Feathers" }

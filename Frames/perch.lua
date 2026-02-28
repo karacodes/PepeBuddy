@@ -5,6 +5,7 @@ local perchHandleFrame
 local perchModel
 local perchIndex = 1
 local PrintPerchBottomCenters
+local GetBottomCenterInUIParent
 
 local PERCH_LAYOUT = {
     defaultSize = 200,
@@ -67,6 +68,11 @@ local function ComputeHandleLayout(scale, perchSize)
     return handleSize, yOffset
 end
 
+local function GetHandleYOffset(scale, perchSize)
+    local _, yOffset = ComputeHandleLayout(scale, perchSize)
+    return yOffset
+end
+
 local function ApplyTransparentBackdrop(frame)
     frame:SetBackdrop(PERCH_STYLE.backdrop)
     frame:SetBackdropColor(unpack(PERCH_STYLE.transparent))
@@ -79,7 +85,6 @@ local perchConfig = {
     x = -0.10,
     y = -0.01,
     z = -0.95,
-    facing = 0.00,
     alpha = 0.00, -- this affects the player model that pepe is attached to, to keep them hidden
     anim = 0, -- this and the next setting only affects the player model animations not pepe's animations
     paused = true,
@@ -101,7 +106,7 @@ local function ApplyModelVisual()
         perchModel:SetPosition(perchConfig.x, perchConfig.y, perchConfig.z)
     end
     if type(perchModel.SetFacing) == "function" then
-        perchModel:SetFacing(perchConfig.facing)
+        perchModel:SetFacing(PepeBuddy:GetPerchFacingSetting())
     end
     if type(perchModel.SetAlpha) == "function" then
         perchModel:SetAlpha(perchConfig.alpha)
@@ -114,13 +119,6 @@ local function ApplyModelVisual()
     elseif type(perchModel.FreezeAnimation) == "function" then
         pcall(perchModel.FreezeAnimation, perchModel, perchConfig.paused)
     end
-end
-
-local function GetSavedPepeIndex()
-    if PepeBuddy and PepeBuddy.GetSelectedPepeSetting then
-        return PepeBuddy:GetSelectedPepeSetting()
-    end
-    return perchIndex
 end
 
 local function NormalizePepeIndex(index, pepes)
@@ -283,6 +281,24 @@ function PepeBuddy:ApplyPerchDebugStyle()
     ApplyPerchDebugStyle()
 end
 
+local function UpdatePerchMovableState()
+    if not perchFrame then
+        return
+    end
+
+    local isMovable = PepeBuddy:GetPerchMovable()
+    perchFrame:SetMovable(isMovable)
+
+    if perchHandleFrame then
+        perchHandleFrame:EnableMouse(isMovable)
+        if isMovable then
+            perchHandleFrame:RegisterForDrag("LeftButton")
+        else
+            perchHandleFrame:RegisterForDrag()
+        end
+    end
+end
+
 -- Layout helpers
 local function UpdatePerchHandleLayout(size)
     if not perchHandleFrame or not perchFrame then
@@ -296,6 +312,50 @@ local function UpdatePerchHandleLayout(size)
     perchHandleFrame:SetSize(handleSize, handleSize)
 end
 
+local function GetCurrentPerchAnchor()
+    local anchorX, anchorY = GetBottomCenterInUIParent(perchHandleFrame)
+    if not anchorX then
+        anchorX, anchorY = GetBottomCenterInUIParent(perchFrame)
+    end
+    if not anchorX or not anchorY then
+        return nil
+    end
+
+    return anchorX, anchorY
+end
+
+local function SavePerchPosition(reason)
+    local anchorX, anchorY = GetCurrentPerchAnchor()
+    if not anchorX or not anchorY then
+        return
+    end
+
+    PepeBuddy:SetPerchPositionSetting({
+        x = anchorX,
+        y = anchorY,
+    })
+    DebugTrace(
+        "anchorMath",
+        "SavePerchPosition reason=%s anchor=(%.2f,%.2f)",
+        tostring(reason or "unknown"),
+        anchorX,
+        anchorY
+    )
+end
+
+local function RestorePerchPosition(size)
+    local position = PepeBuddy:GetPerchPositionSetting()
+    if not position then
+        return false
+    end
+
+    local scale = PepeBuddy:GetPerchScale()
+    local yOffset = GetHandleYOffset(scale, size)
+    perchFrame:ClearAllPoints()
+    perchFrame:SetPoint("BOTTOM", UIParent, "BOTTOMLEFT", position.x, position.y - yOffset)
+    return true
+end
+
 local function EnsurePerchFrameCreated(size)
     if perchFrame then
         return
@@ -303,7 +363,9 @@ local function EnsurePerchFrameCreated(size)
 
     perchFrame = CreateFrame("Frame", "PepeBuddyPerchFrame", UIParent, "BackdropTemplate")
     perchFrame:SetSize(size, size)
-    perchFrame:SetPoint(PERCH_LAYOUT.initialPoint[1], UIParent, PERCH_LAYOUT.initialPoint[2], -size, 0)
+    if not RestorePerchPosition(size) then
+        perchFrame:SetPoint(PERCH_LAYOUT.initialPoint[1], UIParent, PERCH_LAYOUT.initialPoint[2], 0, 0)
+    end
     perchFrame:SetMovable(true)
     perchFrame:EnableMouse(false)
     perchFrame:SetScript("OnShow", function()
@@ -331,6 +393,7 @@ local function EnsurePerchHandleCreated(size)
     end)
     perchHandleFrame:SetScript("OnDragStop", function()
         perchFrame:StopMovingOrSizing()
+        SavePerchPosition("DragStop")
         PrintPerchBottomCenters("DragStop")
     end)
     ApplyTransparentBackdrop(perchHandleFrame)
@@ -355,6 +418,7 @@ function PepeBuddy:ApplyPerchState(reason)
         CreatePerchFrame()
     end
 
+    self:UpdatePerchMovable()
     self:UpdatePerchSize()
     self:ApplyPerchDebugStyle()
     self:SetPerchPepe(self:GetSelectedPepeSetting())
@@ -393,13 +457,33 @@ function PepeBuddy:GetPerchScale()
     return self:GetPerchScaleSetting()
 end
 
+function PepeBuddy:GetPerchMovable()
+    return self:GetPerchMovableSetting()
+end
+
+function PepeBuddy:SetPerchMovable(isMovable)
+    self:SetPerchMovableSetting(isMovable)
+    self:UpdatePerchMovable()
+    self:ApplyPerchDebugStyle()
+end
+
 function PepeBuddy:SetPerchScale(scale)
     self:SetPerchScaleSetting(scale)
     self:UpdatePerchSize()
     self:ApplyPerchDebugStyle()
 end
 
-local function GetBottomCenterInUIParent(frame)
+function PepeBuddy:GetPerchFacing()
+    return self:GetPerchFacingSetting()
+end
+
+function PepeBuddy:SetPerchFacing(facing)
+    self:SetPerchFacingSetting(facing)
+    self:UpdatePerchFacing()
+    self:ApplyPerchDebugStyle()
+end
+
+GetBottomCenterInUIParent = function(frame)
     if not frame then
         return nil, nil
     end
@@ -441,6 +525,20 @@ PrintPerchBottomCenters = function(tag)
     )
 end
 
+function PepeBuddy:UpdatePerchFacing()
+    if not perchModel then
+        return
+    end
+
+    if type(perchModel.SetFacing) == "function" then
+        perchModel:SetFacing(PepeBuddy:GetPerchFacingSetting())
+    end
+end
+
+function PepeBuddy:UpdatePerchMovable()
+    UpdatePerchMovableState()
+end
+
 function PepeBuddy:UpdatePerchSize()
     if not perchFrame then
         return
@@ -448,17 +546,14 @@ function PepeBuddy:UpdatePerchSize()
 
     local scale = self:GetPerchScale()
     local size = ComputePerchSize(scale)
-    local anchorX, anchorY = GetBottomCenterInUIParent(perchHandleFrame)
-    if not anchorX then
-        anchorX, anchorY = GetBottomCenterInUIParent(perchFrame)
-    end
+    local anchorX, anchorY = GetCurrentPerchAnchor()
     DebugTrace(
-        "anchorMath",
-        "UpdatePerchSize begin scale=%.2f size=%.2f anchor=(%s,%s)",
-        scale,
-        size,
-        anchorX and string.format("%.2f", anchorX) or "nil",
-        anchorY and string.format("%.2f", anchorY) or "nil"
+            "anchorMath",
+            "UpdatePerchSize begin scale=%.2f size=%.2f anchor=(%s,%s)",
+            scale,
+            size,
+            anchorX and string.format("%.2f", anchorX) or "nil",
+            anchorY and string.format("%.2f", anchorY) or "nil"
     )
 
     if perchFrame:GetNumPoints() == 0 then
@@ -468,18 +563,23 @@ function PepeBuddy:UpdatePerchSize()
     perchFrame:SetSize(size, size)
     UpdatePerchHandleLayout(size)
     if anchorX and anchorY then
-        local _, yOffset = ComputeHandleLayout(scale, size)
+        local yOffset = GetHandleYOffset(scale, size)
         perchFrame:ClearAllPoints()
         perchFrame:SetPoint("BOTTOM", UIParent, "BOTTOMLEFT", anchorX, anchorY - yOffset)
+        SavePerchPosition("UpdatePerchSize")
     end
     PrintPerchBottomCenters("UpdatePerchSize")
 end
 
 function PepeBuddy:ResetPerchToDefaults()
+    local defaultMovable = self:GetSettingDefault("isMovable") and true or false
     local defaultScale = tonumber(self:GetSettingDefault("scale")) or 1
+    local defaultFacing = tonumber(self:GetSettingDefault("facing")) or 0
     local defaultSelected = tonumber(self:GetSettingDefault("selectedPepe")) or 1
 
+    self:SetPerchMovableSetting(defaultMovable)
     self:SetPerchScaleSetting(defaultScale)
+    self:SetPerchFacingSetting(defaultFacing)
     self:SetSelectedPepeSetting(defaultSelected)
 
     if not perchFrame then
@@ -494,6 +594,8 @@ function PepeBuddy:ResetPerchToDefaults()
     perchFrame:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
     perchFrame:SetSize(size, size)
     UpdatePerchHandleLayout(size)
+    self:SetPerchPositionSetting(nil)
+    self:UpdatePerchMovable()
 
     self:SetPerchPepe(defaultSelected)
 end

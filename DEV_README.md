@@ -87,6 +87,7 @@ Run this checklist after structural code changes.
 6. Toggle debug on/off with `/pb debug` and verify border visibility changes correctly.
 7. Disable and re-enable addon; verify perch hide/show behavior.
 8. `/reload` again and verify selected Pepe, scale, and debug mode persisted.
+9. Turn `Movable` off, `/reload`, and verify Pepe stays on the same side of the screen.
 
 ## Release Candidate Test Gate
 Run this before a release:
@@ -99,6 +100,7 @@ Run this before a release:
    - start from existing SavedVariables
    - `/reload`
    - verify selected pepe/scale/debug mode persist correctly
+   - verify saved perch position also persists when `Movable` is disabled
 3. Runtime behavior
    - switch all pepe variants at least once
    - drag and resize repeatedly
