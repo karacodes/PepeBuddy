@@ -33,6 +33,10 @@ Pepe Buddy is a World of Warcraft addon that places Pepe on your UI.
 - On some teleports or heavy zone loads, Pepe may take a moment to reappear.
 - This is expected and should recover automatically.
 
+## Recent Fixes
+- Fixed a perch anchor bug where player model changes, such as druid shapeshifts, could make Pepe appear to move or change size.
+- Pepe now uses a stable hidden anchor model instead of the live player model.
+
 ## Support
 - If something looks wrong, first try `/reload`.
 - Then test with only PepeBuddy enabled to rule out addon conflicts.

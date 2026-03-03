@@ -1,5 +1,21 @@
 local _, pb = ...
 
+local SETTINGS_LOGO_PATH = "Interface\\AddOns\\PepeBuddy\\Art\\PepeBuddy.png"
+local SETTINGS_ICON_PATH = "Interface\\AddOns\\PepeBuddy\\Art\\Icons\\PepeBuddy-Icon2.png"
+local SETTINGS_HEADER_HEIGHT = 108
+local SETTINGS_HEADER_LOGO_SIZE = 200
+local SETTINGS_HEADER_TEXT_GAP = 16
+local SETTINGS_HEADER_TOP_OFFSET = 40
+local SETTINGS_HEADER_BOTTOM_GAP = 8
+local SETTINGS_HEADER_LOGO_TOP_OFFSET = 12
+local SETTINGS_SPACER_LINE_HEIGHT = 18
+
+local headerSpacerLines = 14
+
+local function BuildHeaderSpacer()
+    return string.rep("\n", headerSpacerLines)
+end
+
 local function BuildPepeValues()
     local values = {}
     local pepes = pb.pepes or {}
@@ -9,43 +25,127 @@ local function BuildPepeValues()
     return values
 end
 
+local function EnsureOptionsHeader(frame)
+    if frame.pepeBuddyHeader then
+        return frame.pepeBuddyHeader
+    end
+
+    local header = CreateFrame("Frame", nil, frame)
+    header:SetHeight(SETTINGS_HEADER_HEIGHT)
+    frame.pepeBuddyHeader = header
+
+    local logo = header:CreateTexture(nil, "ARTWORK")
+    logo:SetTexture(SETTINGS_LOGO_PATH)
+    logo:SetSize(SETTINGS_HEADER_LOGO_SIZE, SETTINGS_HEADER_LOGO_SIZE)
+    logo:SetPoint("TOPRIGHT", 0, SETTINGS_HEADER_LOGO_TOP_OFFSET)
+    header.logo = logo
+
+    local title = header:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    title:SetPoint("TOPLEFT", 0, 0)
+    title:SetPoint("RIGHT", logo, "LEFT", -16, 0)
+    title:SetJustifyH("LEFT")
+    title:SetJustifyV("TOP")
+    title:SetText(pb.displayName)
+    header.title = title
+
+    local author = header:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    author:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -6)
+    author:SetPoint("RIGHT", logo, "LEFT", -16, 0)
+    author:SetJustifyH("LEFT")
+    author:SetJustifyV("TOP")
+    author:SetText("Author: Diabolic Furby (Lockspanner - Wyrmrest Accord)")
+    header.author = author
+
+    local version = header:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    version:SetPoint("TOPLEFT", author, "BOTTOMLEFT", 0, -2)
+    version:SetPoint("RIGHT", logo, "LEFT", -16, 0)
+    version:SetJustifyH("LEFT")
+    version:SetJustifyV("TOP")
+    version:SetText("Version: " .. pb.version)
+    header.version = version
+
+    local description = header:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    description:SetPoint("TOPLEFT", version, "BOTTOMLEFT", 0, -8)
+    description:SetPoint("RIGHT", logo, "LEFT", -16, 0)
+    description:SetJustifyH("LEFT")
+    description:SetJustifyV("TOP")
+    description:SetText(
+        "Pepe can sit on your DPS meter, relax on your chat window, or perch wherever you like. "
+            .. "He'll quietly observe your rotation, witness your wipes, and pretend not to notice "
+            .. "that one mechanic you \"definitely could have dodged.\"\n\n"
+            .. "Customize his look with different costumes and let him judge you in style."
+    )
+    header.description = description
+
+    return header
+end
+
+local function LayoutOptionsHeader(frame)
+    if not frame or not frame.obj or not frame.obj.content then
+        return
+    end
+
+    if frame.obj.label then
+        frame.obj.label:SetText("")
+        frame.obj.label:Hide()
+    end
+
+    local header = EnsureOptionsHeader(frame)
+    header:ClearAllPoints()
+    header:SetPoint("TOPLEFT", frame, "TOPLEFT", 10, -SETTINGS_HEADER_TOP_OFFSET)
+    header:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -10, -SETTINGS_HEADER_TOP_OFFSET)
+
+    local textWidth = math.max(0, header:GetWidth() - SETTINGS_HEADER_LOGO_SIZE - SETTINGS_HEADER_TEXT_GAP)
+    header.title:SetWidth(textWidth)
+    header.author:SetWidth(textWidth)
+    header.version:SetWidth(textWidth)
+    header.description:SetWidth(textWidth)
+
+    local textHeight = header.title:GetStringHeight()
+        + 6
+        + header.author:GetStringHeight()
+        + 2
+        + header.version:GetStringHeight()
+        + 8
+        + header.description:GetStringHeight()
+    local visibleLogoHeight = math.max(0, SETTINGS_HEADER_LOGO_SIZE - SETTINGS_HEADER_LOGO_TOP_OFFSET)
+    local headerHeight = math.max(SETTINGS_HEADER_HEIGHT, visibleLogoHeight, textHeight)
+    header:SetHeight(headerHeight)
+
+    local requiredSpacerLines = math.max(
+        1,
+        math.ceil((SETTINGS_HEADER_TOP_OFFSET + headerHeight + SETTINGS_HEADER_BOTTOM_GAP) / SETTINGS_SPACER_LINE_HEIGHT)
+    )
+    if requiredSpacerLines ~= headerSpacerLines then
+        headerSpacerLines = requiredSpacerLines
+
+        local aceConfigRegistry = LibStub("AceConfigRegistry-3.0", true)
+        if aceConfigRegistry then
+            aceConfigRegistry:NotifyChange(pb.addonName)
+        end
+    end
+
+end
+
 pb.options = {
     name = pb.displayName,
     type = "group",
-    icon = 1044996,
+    icon = SETTINGS_ICON_PATH,
     inline = false,
     childGroups = "tab",
     args = {
-        authorPull = {
+        headerSpacer = {
             type = "description",
             width = "full",
             order = 1,
-            name = "Author: Lockspanner - Wyrmrest Accord",
-        },
-        versionPull = {
-            type = "description",
-            width = "full",
-            order = 2,
-            name = "Version: " .. pb.version,
-        },
-        spacer4 = {
-            type = "description",
-            width = "full",
-            order = 3,
-            name = "Pepe can sit on your DPS meter, relax on your chat window, or perch wherever you like. He’ll quietly observe your rotation, witness your wipes, and pretend not to notice that one mechanic you \“definitely could have dodged.\” \n\nCustomize his look with different costumes and let him judge you in style.",
-        },
-        spacer5 = {
-            type = "description",
-            width = "full",
-            order = 3,
-            name = "\n\n",
+            name = BuildHeaderSpacer,
         },
         settings = {
             name = "Settings",
             type = "group",
             inline = false,
-            order = 4,
-            args={
+            order = 2,
+            args = {
                 selectedPepeHeader = {
                     type = "header",
                     width = "full",
@@ -178,20 +278,6 @@ pb.options = {
                 },
             }
         },
-        --unlocks = {
-        --    name = "Secrets",
-        --    type = "group",
-        --    order = 5,
-        --    args={
-        --        --comingSoon = {
-        --        --    type = "label",
-        --        --    width = "full",
-        --        --    order = 1,
-        --        --    name = "Coming Soon",
-        --        --    desc = "List of Pepe Costumes and how to get them, coming soon.",
-        --        --},
-        --    }
-        --}
     },
 }
 
@@ -213,6 +299,11 @@ function PepeBuddy:SetupOptions()
         pb.addonName,
         pb.displayName
     )
+
+    self.optionsFrame:HookScript("OnShow", function(frame)
+        LayoutOptionsHeader(frame)
+    end)
+    LayoutOptionsHeader(self.optionsFrame)
 end
 
 function PepeBuddy:SetupMinimapIcon()

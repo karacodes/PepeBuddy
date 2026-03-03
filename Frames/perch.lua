@@ -8,7 +8,7 @@ local PrintPerchBottomCenters
 local GetBottomCenterInUIParent
 
 local PERCH_LAYOUT = {
-    defaultSize = 200,
+    defaultSize = 450,
     handleSizeRatio = 0.25,
     handleYOffsetScale = 40,
     handleYOffsetBase = -5,
@@ -32,6 +32,8 @@ local MODEL_APPLY = {
     maxRetries = 3,
 }
 
+local PERCH_ANCHOR_DISPLAY_ID = 93797
+
 local debugTraceFlags = {
     modelApply = true,
     anchorMath = true,
@@ -39,6 +41,7 @@ local debugTraceFlags = {
 
 local pendingPepeRetryTimer = nil
 local pendingPepeRetryToken = 0
+local uiParentShowHookInstalled = false
 
 local function DebugTrace(flag, message, ...)
     if not (PepeBuddy and PepeBuddy.GetDebugMode and PepeBuddy:GetDebugMode()) then
@@ -82,11 +85,11 @@ end
 local perchConfig = {
     cam = 0.70,
     zoom = 0.00,
-    x = -0.10,
+    x = 0.00,
     y = -0.01,
-    z = -0.95,
-    alpha = 0.00, -- this affects the player model that pepe is attached to, to keep them hidden
-    anim = 0, -- this and the next setting only affects the player model animations not pepe's animations
+    z = -1.00,
+    alpha = 0.00, -- keep the fixed anchor model hidden so only Pepe is visible
+    anim = 0, -- only affects the hidden anchor model, not Pepe's visual kit
     paused = true,
 }
 
@@ -146,11 +149,8 @@ local function EnsureModelReady()
     if type(perchModel.ClearModel) == "function" then
         perchModel:ClearModel()
     end
-    if type(perchModel.SetUnit) == "function" then
-        perchModel:SetUnit("player")
-    end
-    if type(perchModel.RefreshUnit) == "function" then
-        perchModel:RefreshUnit()
+    if type(perchModel.SetDisplayInfo) == "function" then
+        perchModel:SetDisplayInfo(PERCH_ANCHOR_DISPLAY_ID)
     end
     if type(perchModel.Undress) == "function" then
         perchModel:Undress()
@@ -313,15 +313,16 @@ local function UpdatePerchHandleLayout(size)
 end
 
 local function GetCurrentPerchAnchor()
-    local anchorX, anchorY = GetBottomCenterInUIParent(perchHandleFrame)
-    if not anchorX then
-        anchorX, anchorY = GetBottomCenterInUIParent(perchFrame)
-    end
+    local anchorX, anchorY = GetBottomCenterInUIParent(perchFrame)
     if not anchorX or not anchorY then
         return nil
     end
 
-    return anchorX, anchorY
+    local scale = PepeBuddy:GetPerchScale()
+    local size = ComputePerchSize(scale)
+    local yOffset = GetHandleYOffset(scale, size)
+
+    return anchorX, anchorY + yOffset
 end
 
 local function SavePerchPosition(reason)
@@ -386,6 +387,7 @@ local function EnsurePerchHandleCreated(size)
 
     perchHandleFrame = CreateFrame("Frame", nil, perchFrame, "BackdropTemplate")
     UpdatePerchHandleLayout(size)
+    perchHandleFrame:SetClampedToScreen(true)
     perchHandleFrame:EnableMouse(true)
     perchHandleFrame:RegisterForDrag("LeftButton")
     perchHandleFrame:SetScript("OnDragStart", function()
@@ -412,6 +414,22 @@ local function CreatePerchFrame()
     ApplyPerchDebugStyle()
 end
 
+local function EnsureUIParentShowHook()
+    if uiParentShowHookInstalled then
+        return
+    end
+
+    uiParentShowHookInstalled = true
+    UIParent:HookScript("OnShow", function()
+        if not PepeBuddy or not PepeBuddy.perchFrame or not PepeBuddy:IsEnabled() then
+            return
+        end
+
+        PepeBuddy.perchFrame:Show()
+        PepeBuddy:ApplyPerchState("UIParent.OnShow")
+    end)
+end
+
 -- State application and public API
 function PepeBuddy:ApplyPerchState(reason)
     if not perchFrame then
@@ -428,6 +446,7 @@ end
 
 function PepeBuddy:InitializePerch()
     CreatePerchFrame()
+    EnsureUIParentShowHook()
     self:ApplyPerchState("InitializePerch")
     perchFrame:Hide()
     self.perchFrame = perchFrame
@@ -611,7 +630,6 @@ function PepeBuddy:StartPerchRefresh()
 
     self._perchRefreshActive = true
     self:RegisterEvent("PLAYER_ENTERING_WORLD", "OnPerchRefreshEvent")
-    self:RegisterEvent("UNIT_MODEL_CHANGED", "OnPerchRefreshEvent")
 end
 
 function PepeBuddy:StopPerchRefresh()
@@ -622,13 +640,9 @@ function PepeBuddy:StopPerchRefresh()
     self._perchRefreshActive = false
     CancelPendingPepeRetry()
     self:UnregisterEvent("PLAYER_ENTERING_WORLD")
-    self:UnregisterEvent("UNIT_MODEL_CHANGED")
 end
 
-function PepeBuddy:OnPerchRefreshEvent(event, unit)
-    if event == "UNIT_MODEL_CHANGED" and unit ~= "player" then
-        return
-    end
+function PepeBuddy:OnPerchRefreshEvent()
     if not self.perchFrame or not self.perchFrame:IsShown() then
         self:StopPerchRefresh()
         return

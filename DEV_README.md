@@ -28,10 +28,18 @@ Developer-focused architecture, flow, and validation notes for maintaining PepeB
 - `Frames/Perch.lua`
   - Contains model, layout, style, and refresh orchestration.
   - Main apply entrypoint: `ApplyPerchState(reason)`.
+  - Uses a fixed hidden anchor model (`DisplayInfoID 93797`, Gelbin Mekkatorque) so player shapeshifts do not move Pepe.
   - Uses constants tables:
     - `PERCH_LAYOUT`
     - `PERCH_STYLE`
     - `MODEL_APPLY`
+
+### Settings Header Layout
+- `Config/Options.lua`
+  - Uses a custom header frame above the AceConfig content area.
+  - Header text height is measured dynamically with `GetStringHeight()`, so longer localized strings should increase reserved vertical space correctly.
+  - The text/logo split is still driven by fixed constants such as logo size and text gap, so long translations may need follow-up tuning on narrow layouts.
+  - When localization is added, move header strings into locale keys and re-check layout with longer languages such as German or French.
 
 ## Primary Control Flows
 
@@ -53,10 +61,24 @@ Developer-focused architecture, flow, and validation notes for maintaining PepeB
 ### Resize and Anchor Behavior
 1. Scale changes update frame size and handle size.
 2. Perch reanchors using handle bottom-center as absolute anchor reference.
+3. Saved perch position must be computed from the perch frame plus the expected handle offset, not from the handle's live screen coordinates.
+4. Reason: the handle may be clamped for drag safety, and a clamped handle can distort persisted `x` coordinates near screen edges.
 
 ### Zone/Model Refresh
-1. While frame is shown, `PLAYER_ENTERING_WORLD` and `UNIT_MODEL_CHANGED` trigger `ApplyPerchState`.
+1. While frame is shown, `PLAYER_ENTERING_WORLD` triggers `ApplyPerchState`.
 2. Refresh stops and unregisters events when frame hides.
+
+### Known Bug Fix: Player Shapeshift Anchor Drift
+1. Previous behavior used `PlayerModel:SetUnit("player")` as Pepe's hidden anchor.
+2. Druid shapeshifts and other player model changes moved the anchor inside the scene, making Pepe appear to shift position and scale.
+3. The fix is a stable hidden NPC anchor model using `SetDisplayInfo(93797)` instead of binding to the live player unit.
+4. If anchor visuals need retuning later, adjust camera/position values in `perchConfig` rather than restoring `SetUnit("player")`.
+
+### Known Bug Fix: Movable Off Position Drift
+1. A previous implementation saved perch position from the handle frame's live bottom-center coordinates.
+2. Because the handle is clamped for drag interaction safety, its live coordinates could diverge from the perch frame near the right edge of the screen.
+3. This caused asymmetric reload/login drift when `Movable` was off: right-side placements shifted left while left-side placements often stayed correct.
+4. The fix is to persist anchor position from the perch frame and derive the expected handle anchor mathematically from the configured offset.
 
 ## Baseline Behavior
 This baseline is expected after refactor phases 0-6.
@@ -109,7 +131,10 @@ Run this before a release:
    - long-distance travel through zones
    - teleport to a different zone
    - verify recovery behavior is acceptable and no stuck-invisible model
-5. Session stability
+5. Anchor stability
+   - shapeshift on a druid or trigger other player appearance changes
+   - verify Pepe stays fixed in place and does not change apparent size
+6. Session stability
    - play at least 20 minutes with normal interactions
    - verify no repeated retry spam and no Lua errors
 

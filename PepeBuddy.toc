@@ -1,9 +1,9 @@
 ## Interface: 120001, 120000
 ## Title: Pepe Buddy
 ## SavedVariablesPerCharacter: PepeBuddyPreferences
-## Author: Lockspanner
-## Version: 4.0.1
-## IconTexture: Interface\AddOns\PepeBuddy\Art\Icons\ability_garrison_orangebird.jpg
+## Author: Diabolic Furby (Lockspanner - Wyrmrest Accord)
+## Version: 4.0.2
+## IconTexture: Interface\AddOns\PepeBuddy\Art\Icons\PepeBuddy-Icon2.png
 
 embeds.xml
 
