@@ -191,22 +191,41 @@ pb.options = {
                         PepeBuddy:SetPerchMovable(value)
                     end,
                 },
-                scaleHeader = {
+                minimapIconHeader = {
                     type = "header",
                     width = "full",
                     order = 6,
+                    name = "Minimap Button",
+                },
+                minimapIconHidden = {
+                    type = "toggle",
+                    width = "full",
+                    order = 7,
+                    name = "Hide the minimap button.",
+                    get = function()
+                        return PepeBuddy:GetMinimapIconHidden()
+                    end,
+                    set = function(_, value)
+                        PepeBuddy:SetMinimapIconHidden(value)
+                        PepeBuddy:RefreshMinimapIconVisibility()
+                    end,
+                },
+                scaleHeader = {
+                    type = "header",
+                    width = "full",
+                    order = 8,
                     name = "Scale",
                 },
                 scaleDesc = {
                     type = "description",
                     width = "full",
-                    order = 7,
+                    order = 9,
                     name = "Set the display size of Pepe.",
                 },
                 scale = {
                     type = "range",
                     width = "full",
-                    order = 8,
+                    order = 10,
                     name = "",
                     min = 0.05,
                     max = 4,
@@ -224,19 +243,19 @@ pb.options = {
                 facingHeader = {
                     type = "header",
                     width = "full",
-                    order = 10,
+                    order = 12,
                     name = "Facing",
                 },
                 facingDesc = {
                     type = "description",
                     width = "full",
-                    order = 11,
+                    order = 13,
                     name = "Change the angle that Pepe faces, left to right. Default is center.",
                 },
                 facing = {
                     type = "range",
                     width = "full",
-                    order = 12,
+                    order = 14,
                     name = "",
                     min = -1,
                     max = 1,
@@ -254,19 +273,19 @@ pb.options = {
                 resetPerchHeader = {
                     type = "header",
                     width = "full",
-                    order = 13,
+                    order = 15,
                     name = "Reset",
                 },
                 resetPerchDesc = {
                     type = "description",
                     width = "full",
-                    order = 14,
+                    order = 16,
                     name = "Reset Pepe to defaults and move the perch back to screen center.",
                 },
                 resetPerchButton = {
                     type = "execute",
                     width = "full",
-                    order = 15,
+                    order = 17,
                     name = "Reset Pepe to all defaults",
                     func = function()
                         PepeBuddy:ResetPerchToDefaults()
@@ -306,6 +325,19 @@ function PepeBuddy:SetupOptions()
     LayoutOptionsHeader(self.optionsFrame)
 end
 
+function PepeBuddy:RefreshMinimapIconVisibility()
+    if not self.minimapIcon then
+        return
+    end
+
+    if self:GetMinimapIconHidden() then
+        self.minimapIcon:Hide(pb.minimapIconName)
+        return
+    end
+
+    self.minimapIcon:Show(pb.minimapIconName)
+end
+
 function PepeBuddy:SetupMinimapIcon()
     self.minimapIconDB = LibStub("LibDataBroker-1.1"):NewDataObject(pb.minimapDBName, {
         type = "data source",
@@ -325,4 +357,5 @@ function PepeBuddy:SetupMinimapIcon()
     })
 
     self.minimapIcon:Register(pb.minimapIconName, self.minimapIconDB, self.db.profile.minimapIcon)
+    self:RefreshMinimapIconVisibility()
 end

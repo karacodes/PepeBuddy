@@ -130,3 +130,17 @@ function PepeBuddy:SetPerchPositionSetting(position)
         y = y,
     })
 end
+
+function PepeBuddy:GetMinimapIconHidden()
+    local minimapIcon = self.db and self.db.profile and self.db.profile.minimapIcon
+    return minimapIcon and minimapIcon.hide and true or false
+end
+
+function PepeBuddy:SetMinimapIconHidden(hidden)
+    if not (self.db and self.db.profile) then
+        return
+    end
+
+    self.db.profile.minimapIcon = self.db.profile.minimapIcon or {}
+    self.db.profile.minimapIcon.hide = hidden and true or false
+end
