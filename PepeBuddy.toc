@@ -2,7 +2,7 @@
 ## Title: Pepe Buddy
 ## SavedVariablesPerCharacter: PepeBuddyPreferences
 ## Author: Diabolic Furby (Lockspanner - Wyrmrest Accord)
-## Version: 4.0.2
+## Version: 4.0.3
 ## IconTexture: Interface\AddOns\PepeBuddy\Art\Icons\PepeBuddy-Icon2.png
 
 embeds.xml
